@@ -7,6 +7,11 @@ from pygame import Rect
 from pygame.constants import SRCALPHA
 from pygame.surface import Surface
 
+MISSING_TEXTURE = Surface((120, 120))
+MISSING_TEXTURE.fill(0xFF00FFFF)
+MISSING_TEXTURE.fill(0x000000FF, Rect(60, 0, 60, 60))
+MISSING_TEXTURE.fill(0x000000FF, Rect(0, 60, 60, 60))
+
 arrowmap = ["⬅", "⬇", "⬆", "➡"]
 colormap = [0xFF00FFFF, 0x00FFFFFF, 0x00FF00FF, 0xFF0000FF]
 anglemap = [-90, 180, 0, 90]
@@ -33,10 +38,7 @@ class Note:
     def sprite(self) -> Surface:
         surf = Surface((120, 120), flags = SRCALPHA)
         if self.flag not in self.valid_flags:
-            surf.fill(0xFF00FFFF)
-            surf.fill(0x000000FF, Rect(60, 0, 60, 60))
-            surf.fill(0x000000FF, Rect(0, 60, 60, 60))
-            return surf
+            return MISSING_TEXTURE
 
         color = colormap[self.lane]
         pygame.draw.polygon(surf, color, up_arrow_shape, 0)
