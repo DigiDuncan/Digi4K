@@ -33,7 +33,7 @@ up_arrow_shape = [
 
 
 class Note:
-    valid_flags = ["normal"]
+    valid_flags = ["normal", "bomb", "death", "gold"]
 
     def __init__(self, lane: Literal[0, 1, 2, 3], position: float, length: float = 0.0, flag: str = "normal"):
         self.lane = lane
@@ -54,9 +54,21 @@ class Note:
         if self.flag not in self.valid_flags:
             return MISSING_TEXTURE
 
-        color = colormap[self.lane]
+        if self.flag == "normal":
+            color = colormap[self.lane]
+            outline = Color(0x000000FF)
+        elif self.flag == "bomb":
+            color = Color(0x000000FF)
+            outline = Color(0xAA0000FF)
+        elif self.flag == "death":
+            color = Color(0x000000FF)
+            outline = Color(0xFFFFFFFF)
+        elif self.flag == "gold":
+            color = Color(0xAAAA00FF)
+            outline = Color(0xAA6600FF)
+
         pygame.draw.polygon(surf, color, up_arrow_shape, 0)
-        pygame.draw.lines(surf, BLACK, True, up_arrow_shape, 6)
+        pygame.draw.lines(surf, outline, True, up_arrow_shape, 6)
         surf = pygame.transform.rotate(surf, anglemap[self.lane])
         return surf
 
