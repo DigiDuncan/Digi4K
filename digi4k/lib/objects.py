@@ -13,10 +13,10 @@ MISSING_TEXTURE.fill(0xFF00FF)
 MISSING_TEXTURE.fill(0x000000, Rect(60, 0, 60, 60))
 MISSING_TEXTURE.fill(0x000000, Rect(0, 60, 60, 60))
 
-BLACK = Color(0x00, 0x00, 0x00, 0xFF)
+BLACK = Color(0x000000FF)
 
 arrowmap = ["⬅", "⬇", "⬆", "➡"]
-colormap = [Color(0xFFFFFFFF),
+colormap = [Color(0xFF00FFFF),
             Color(0x00FFFFFF),
             Color(0x00FF00FF),
             Color(0xFF0000FF)]
@@ -46,7 +46,7 @@ class Note:
         arrow = arrowmap[self.lane]
         pos = f" P {round(self.position, 4)}"
         length = "" if self.length == 0 else f" L {round(self.length, 4)}"
-        return f"<{flag}{arrow}{pos}{length}>"
+        return f"<Note {flag}{arrow}{pos}{length}>"
 
     @property
     def sprite(self) -> Surface:
@@ -56,7 +56,7 @@ class Note:
 
         color = colormap[self.lane]
         pygame.draw.polygon(surf, color, up_arrow_shape, 0)
-        pygame.draw.polygon(surf, BLACK, up_arrow_shape, 6)
+        pygame.draw.lines(surf, BLACK, True, up_arrow_shape, 6)
         surf = pygame.transform.rotate(surf, anglemap[self.lane])
         return surf
 
@@ -85,6 +85,9 @@ class DisplayNote:
     @property
     def sprite(self):
         return self.note.sprite
+
+    def __str__(self) -> str:
+        return self.note.__str__().replace("Note", "DisplayNote")
 
 
 class Highway:

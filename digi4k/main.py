@@ -1,4 +1,4 @@
-from digi4k.lib.objects import Note
+from digi4k.lib.objects import DisplayNote, Note
 import nygame
 import pygame
 
@@ -31,7 +31,7 @@ class Game(nygame.Game):
         lane = self.lanes[self.current_lane]
         flag = self.flags[self.current_flag]
 
-        note = Note(lane, 0, 0, flag = flag)
+        note = DisplayNote(Note(lane, 0, 0, flag = flag))
         note_sprite = note.sprite
         note_rect = note_sprite.get_rect()
         note_rect.center = self.surface.get_rect().center
