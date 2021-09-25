@@ -5,7 +5,7 @@ import pygame
 
 class Game(nygame.Game):
     def __init__(self):
-        super().__init__(size=(1280, 720))
+        super().__init__(size=(1280, 720), bgcolor=0xAAAAAA)
 
         self.lanes = [0, 1, 2, 3]
         self.flags = ["normal", "unknown"]
@@ -35,7 +35,7 @@ class Game(nygame.Game):
         note_sprite = note.sprite
         note_rect = note_sprite.get_rect()
         note_rect.center = self.surface.get_rect().center
-        self.surface.blit(note_sprite, (0, 0))
+        self.surface.blit(note_sprite, note_rect)
 
 
 def main():

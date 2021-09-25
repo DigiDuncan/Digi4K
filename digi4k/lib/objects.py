@@ -1,6 +1,7 @@
 from typing import List, Literal
 
 import pygame
+from pygame.color import Color
 import pygame.draw
 import pygame.transform
 from pygame import Rect
@@ -12,10 +13,23 @@ MISSING_TEXTURE.fill(0xFF00FF)
 MISSING_TEXTURE.fill(0x000000, Rect(60, 0, 60, 60))
 MISSING_TEXTURE.fill(0x000000, Rect(0, 60, 60, 60))
 
+BLACK = Color(0x00, 0x00, 0x00, 0xFF)
+
 arrowmap = ["⬅", "⬇", "⬆", "➡"]
-colormap = [0xFF00FF, 0x00FFFF, 0x00FF00, 0xFF0000]
-anglemap = [-90, 180, 0, 90]
-up_arrow_shape = [(43, 112), (76, 112), (76, 60), (97, 36), (112, 60), (60, 8), (8, 60), (23, 36), (43, 60)]
+colormap = [Color(0xFFFFFFFF),
+            Color(0x00FFFFFF),
+            Color(0x00FF00FF),
+            Color(0xFF0000FF)]
+anglemap = [90, 180, 0, -90]
+up_arrow_shape = [
+    (60, 4),
+    (4, 60),
+    (40, 60),
+    (40, 116),
+    (80, 116),
+    (80, 60),
+    (116, 60)
+]
 
 
 class Note:
@@ -41,10 +55,36 @@ class Note:
             return MISSING_TEXTURE
 
         color = colormap[self.lane]
-        pygame.draw.polygon(surf, (0xFF, 0x00, 0xFF, 0xFF), up_arrow_shape, 0)
-        # pygame.draw.polygon(surf, 0x000000FF, up_arrow_shape, 6)
-        pygame.transform.rotate(surf, anglemap[self.lane])
+        pygame.draw.polygon(surf, color, up_arrow_shape, 0)
+        pygame.draw.polygon(surf, BLACK, up_arrow_shape, 6)
+        surf = pygame.transform.rotate(surf, anglemap[self.lane])
         return surf
+
+
+class DisplayNote:
+    def __init__(self, note: Note):
+        self.note = note
+        self.hit_time = None
+
+    @property
+    def lane(self):
+        return self.note.lane
+
+    @property
+    def position(self):
+        return self.note.position
+
+    @property
+    def length(self):
+        return self.note.length
+
+    @property
+    def flag(self):
+        return self.note.flag
+
+    @property
+    def sprite(self):
+        return self.note.sprite
 
 
 class Highway:
