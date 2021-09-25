@@ -35,7 +35,7 @@ class Game(nygame.Game):
         note_sprite = note.sprite
         note_rect = note_sprite.get_rect()
         note_rect.center = self.surface.get_rect().center
-        self.surface.blit(note_sprite, note_rect)
+        self.surface.blit(note_sprite, (0, 0))
 
 
 def main():

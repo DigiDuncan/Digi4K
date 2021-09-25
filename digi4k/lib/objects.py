@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import List, Literal
 
 import pygame
 import pygame.draw
@@ -8,12 +8,12 @@ from pygame.constants import SRCALPHA
 from pygame.surface import Surface
 
 MISSING_TEXTURE = Surface((120, 120))
-MISSING_TEXTURE.fill(0xFF00FFFF)
-MISSING_TEXTURE.fill(0x000000FF, Rect(60, 0, 60, 60))
-MISSING_TEXTURE.fill(0x000000FF, Rect(0, 60, 60, 60))
+MISSING_TEXTURE.fill(0xFF00FF)
+MISSING_TEXTURE.fill(0x000000, Rect(60, 0, 60, 60))
+MISSING_TEXTURE.fill(0x000000, Rect(0, 60, 60, 60))
 
 arrowmap = ["⬅", "⬇", "⬆", "➡"]
-colormap = [0xFF00FFFF, 0x00FFFFFF, 0x00FF00FF, 0xFF0000FF]
+colormap = [0xFF00FF, 0x00FFFF, 0x00FF00, 0xFF0000]
 anglemap = [-90, 180, 0, 90]
 up_arrow_shape = [(43, 112), (76, 112), (76, 60), (97, 36), (112, 60), (60, 8), (8, 60), (23, 36), (43, 60)]
 
@@ -41,14 +41,14 @@ class Note:
             return MISSING_TEXTURE
 
         color = colormap[self.lane]
-        pygame.draw.polygon(surf, color, up_arrow_shape, 0)
-        pygame.draw.polygon(surf, 0x000000FF, up_arrow_shape, 6)
-        pygame.transform.rotate(self.sprite, anglemap[self.lane])
+        pygame.draw.polygon(surf, (0xFF, 0x00, 0xFF, 0xFF), up_arrow_shape, 0)
+        # pygame.draw.polygon(surf, 0x000000FF, up_arrow_shape, 6)
+        pygame.transform.rotate(surf, anglemap[self.lane])
         return surf
 
 
 class Highway:
-    def __init__(self, notes: list[Note], size = (480, 720)) -> None:
+    def __init__(self, notes: List[Note], size = (480, 720)) -> None:
         self.notes = notes
         self.size = size
         self.viewport_size = 0.75  # 750ms
