@@ -16,6 +16,11 @@ An example of FNF gameplay can be found [here.](https://www.youtube.com/watch?v=
   * Chart displays on the left and is automatically played.
   * The opponents notes can cause effects (see **Effects.**)
 * Look visually accurate (and improved) to FNF.
+* Have the feature set of FNF, with a lot of these togglable.
+  * Track mute (your vocals mute when you miss)
+  * Ghost tapping (you're allowed to hit notes that aren't there with no penalty but accuracy)
+  * Key rebinding
+  * Upscroll/downscroll toggle
 
 ### Chart Reading
 * Able to parse the (annoyingly structured) `.jsons` FNF uses.
