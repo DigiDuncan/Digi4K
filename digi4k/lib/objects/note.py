@@ -18,7 +18,7 @@ class ChartNote:
         self.missed = False
 
     def hittable(self, current_time: float, window: tuple[float, float]):
-        offset = self.current_time - self.pos
+        offset = current_time - self.pos
 
         # window is a tuple of the amount early you can be and the amount late you can be
         window_front_end, window_back_end = window
