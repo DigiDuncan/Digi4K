@@ -44,10 +44,12 @@ class ChartEvent:
 
 
 class Chart:
-    def __init__(self, name: str, diff: int, player: int, notes: list[ChartNote], events: list[ChartEvent]):
+    def __init__(self, name: str, diff: int, player: int, bpm: float, notespeed: float, notes: list[ChartNote], events: list[ChartEvent]):
         self.name = name
         self.diff = diff
         self.player = player
+        self.bpm = bpm
+        self.notespeed = notespeed
         self.notes = sorted(notes)
         self.events = sorted(events)
 
@@ -55,3 +57,24 @@ class Chart:
     @property
     def notes_and_events(self):
         return sorted(self.notes + self.events)
+
+    @classmethod
+    def from_JSON(jsondata: dict):
+        return chart_parse(jsondata)
+
+
+def chart_parse(jsondata: dict):
+    song = jsondata["song"]
+    name = song["song"]
+    bpm = song["bpm"]
+    notespeed = song["speed"]
+    notes: list[ChartNote] = []
+    for section in song["notes"]:
+        if section["sectionNotes"]:
+            for note in section:
+                notes.append(ChartNote(*note))  # expansions ahoy
+    # diff is hardcoded right now because I don't know how to extract it from
+    # the chart. I think it's just based on the name.
+    # I'm also ignoring events for now since they don't technically exist in
+    # charts and I'm going to be generating them.
+    return Chart(name = name, diff = 2, bpm = bpm, notespeed = notespeed, notes = notes, events = [])
