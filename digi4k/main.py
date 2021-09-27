@@ -1,4 +1,4 @@
-from digi4k.lib.objects import DisplayNote, Note
+from digi4k.lib.draw_objects import DisplayNote, Note
 import nygame
 import pygame
 from nygame import DigiText as T
