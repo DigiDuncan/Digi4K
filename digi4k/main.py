@@ -16,6 +16,7 @@ class Game(nygame.Game):
 
     def loop(self, events):
         # Inputs
+        # This is not real game code it's just a sprite viewer rn
         for e in events:
             if e.type == pygame.KEYDOWN:
                 if e.key == pygame.K_LEFT:
