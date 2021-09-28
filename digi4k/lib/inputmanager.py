@@ -27,8 +27,9 @@ class InputManager:
         self.justReleased.add(key)
         self.pressed.discard(key)
 
-    def __hash__(self):
-        return hash((self.pressed, self.justPressed, self.justReleased))
+    @property
+    def has_changes(self):
+        return bool(self.justPressed or self.justReleased)
 
     def __str__(self):
         keys = sorted(self.pressed | self.justReleased)
@@ -37,10 +38,10 @@ class InputManager:
 
 def key_str(key: int, pressed: bool, released: bool) -> str:
     if pressed:
-        prefix = "[↓]"
+        prefix = "🗹"
     elif released:
-        prefix = "[↑]"
+        prefix = "🗵"
     else:
-        prefix = ""
+        prefix = "⬚"
 
     return prefix + pygame.key.name(key)
