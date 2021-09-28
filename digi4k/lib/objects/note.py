@@ -37,6 +37,12 @@ class ChartNote:
     def __lt__(self, other):
         self.pos < other.pos
 
+    def __repr__(self):
+        return f"<{self.pos}, {self.lane}, {self.length}, {self.flag}>"
+
+    def __str__(self):
+        return f"<{self.pos}, {self.lane}, {self.length}, {self.flag}>"
+
 
 # This is for stuff in charts that's not notes
 # This probably is a bad idea but I don't want to think of every type of event rn
@@ -63,18 +69,20 @@ class Chart:
         return sorted(self.notes + self.events)     # sorted() is slow, calling it on a property is a bad idea
 
     @classmethod
-    def from_JSON(jsondata: dict):
-        song = jsondata["song"]
+    def from_json(cls, j: dict):
+        song = j["song"]
         name = song["song"]
         bpm = song["bpm"]
         notespeed = song["speed"]
         notes: list[ChartNote] = []
-        for section in song["notes"]:
-            if section["sectionNotes"]:
-                for note in section:
+        sections = song["notes"]
+        for section in sections:
+            sectionNotes = section["sectionNotes"]
+            if sectionNotes:
+                for note in sectionNotes:
                     notes.append(ChartNote(*note))  # expansions ahoy
         # diff is hardcoded right now because I don't know how to extract it from
         # the chart. I think it's just based on the name.
         # I'm also ignoring events for now since they don't technically exist in
         # charts and I'm going to be generating them.
-        return Chart(name = name, diff = 2, bpm = bpm, notespeed = notespeed, notes = notes, events = [])
+        return Chart(name = name, player = 1, diff = 2, bpm = bpm, notespeed = notespeed, notes = notes, events = [])
