@@ -1,4 +1,4 @@
-from digi4k.lib.objects.note import Chart
+from digi4k.lib.objects.note import Chart, ChartNote
 
 
 class InputParser:
@@ -10,8 +10,9 @@ class InputParser:
     def try_hit_note(self, current_time: float, lanes: list[int], chart: Chart) -> bool:
         notes = chart.notes
         for lane in lanes:
-            good_notes = sorted([note for note in notes if note.lane == lane and note.hittable(current_time, (self.front_end, self.back_end))])
+            good_notes: list[ChartNote] = sorted([note for note in notes if note.lane == lane and note.hittable(current_time, (self.front_end, self.back_end))])
             if good_notes:
                 good_notes[0].hit = True
+                good_notes[0].hit_time = current_time
                 return True
         return False
