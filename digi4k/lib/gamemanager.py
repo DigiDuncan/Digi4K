@@ -1,8 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from pygame.constants import K_d, K_f, K_j, K_k
-
 from digi4k.lib.objects.inputparser import InputParser
 from digi4k.lib.objects.keybinder import KeyBinder
 
