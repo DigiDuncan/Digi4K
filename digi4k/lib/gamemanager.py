@@ -1,6 +1,10 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+from pygame.constants import K_d, K_f, K_j, K_k
+
+from digi4k.lib.objects.inputparser import InputParser
+
 if TYPE_CHECKING:
     from digi4k.main import Game
 
@@ -25,10 +29,24 @@ class GameManager:
         music.play(files(digi4k.data.tutorial).joinpath("Tutorial_Inst.ogg"))
 
         self.input = InputManager()
+        self.inputparser = InputParser(0, 0)
 
     def update(self, events: list):
         now = music.elapsed
         self.input.update(events)
+
+        lanemap = {
+            K_d: 0,
+            K_f: 1,
+            K_j: 2,
+            K_k: 3
+        }
+
+        lanes = [lanemap[k] for k in self.input.justPressed]
+
+        self.inputparser.try_hit_note(now, lanes, self.song.charts[0])
+
+        # Draws
         self.highway_p1.update(now)
         self.highway_p2.update(now)
         highway_p1_rect = self.highway_p1._image.get_rect()

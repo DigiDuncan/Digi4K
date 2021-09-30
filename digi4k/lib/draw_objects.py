@@ -90,6 +90,10 @@ class DisplayNote:
         pygame.draw.polygon(surf, color, up_arrow_shape, 0)
         pygame.draw.lines(surf, outline, True, up_arrow_shape, 6)
         surf = pygame.transform.rotate(surf, anglemap[self.lane])
+
+        if self.hit:
+            surf.set_alpha(100)
+
         return surf
 
     def __repr__(self) -> str:
