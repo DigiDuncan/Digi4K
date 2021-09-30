@@ -80,7 +80,7 @@ class Song:
         self.diff = diff
         self.bpm = bpm
         self.charts = charts
-        self.events = sorted(events)
+        self.events = events
 
     # Might be helpful?
     @property
