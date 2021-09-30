@@ -35,6 +35,7 @@ up_arrow_shape = [
 
 class DisplayNote:
     valid_flags = ["normal"]
+    cache = {}
 
     def __init__(self, note: ChartNote):
         self.note = note
@@ -68,8 +69,16 @@ class DisplayNote:
     def missed(self):
         return self.note.missed
 
+    # This will need to be adjusted later to account for, like, everything.
+    @property
+    def caching_key(self):
+        return self.note.lane, self.note.length, self.note.flag, self.note.hit, self.note.missed
+
     @property
     def sprite(self):
+        if self.caching_key in self.cache:
+            return self.cache[self.caching_key]
+
         surf = Surface((120, 120), flags = SRCALPHA)
         if self.flag not in self.valid_flags:
             return MISSING_TEXTURE
@@ -94,6 +103,7 @@ class DisplayNote:
         if self.hit:
             surf.set_alpha(100)
 
+        self.cache[self.caching_key] = surf
         return surf
 
     def __repr__(self) -> str:
