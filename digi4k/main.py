@@ -1,5 +1,6 @@
-from digi4k.lib.gamemanager import GameManager
 import nygame
+
+from digi4k.lib.gamemanager import GameManager
 
 
 class Game(nygame.Game):

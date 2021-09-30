@@ -70,8 +70,8 @@ class Chart:
     def __init__(self,  player: int, notespeed: float, notes: list[ChartNote], events: list[ChartEvent]):
         self.player = player
         self.notespeed = notespeed
-        self.notes = sorted(notes)
-        self.events = sorted(events)
+        self.notes: list[ChartNote] = sorted(notes)
+        self.events: list[ChartEvent] = sorted(events)
 
 
 class Song:

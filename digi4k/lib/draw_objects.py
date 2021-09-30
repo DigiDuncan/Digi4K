@@ -1,8 +1,8 @@
 import pygame
-from pygame.color import Color
 import pygame.draw
 import pygame.transform
 from pygame import Rect
+from pygame.color import Color
 from pygame.constants import SRCALPHA
 from pygame.surface import Surface
 

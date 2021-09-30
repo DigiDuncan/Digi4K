@@ -1,20 +1,18 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from digi4k.lib.objects.note import Chart, Song
-
 if TYPE_CHECKING:
     from digi4k.main import Game
 
-from digi4k.lib.inputmanager import InputManager
-
-from digi4k.lib.draw_objects import Highway
-from importlib.resources import files
 import json
-
-import digi4k.data.tutorial
+from importlib.resources import files
 
 from nygame import music
+
+import digi4k.data.tutorial
+from digi4k.lib.draw_objects import Highway
+from digi4k.lib.inputmanager import InputManager
+from digi4k.lib.objects.note import Song
 
 
 class GameManager:
