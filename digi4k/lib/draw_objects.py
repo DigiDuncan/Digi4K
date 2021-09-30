@@ -1,5 +1,3 @@
-from typing import List, Literal
-
 import pygame
 from pygame.color import Color
 import pygame.draw
@@ -8,12 +6,15 @@ from pygame import Rect
 from pygame.constants import SRCALPHA
 from pygame.surface import Surface
 
+from digi4k.lib.objects.note import Chart, ChartNote
+
 MISSING_TEXTURE = Surface((120, 120))
 MISSING_TEXTURE.fill(0xFF00FF)
 MISSING_TEXTURE.fill(0x000000, Rect(60, 0, 60, 60))
 MISSING_TEXTURE.fill(0x000000, Rect(0, 60, 60, 60))
 
 BLACK = Color(0x000000FF)
+CLEAR = Color(0x00000000)
 
 arrowmap = ["⬅", "⬇", "⬆", "➡"]
 colormap = [Color(0xFF00FFFF),
@@ -32,24 +33,43 @@ up_arrow_shape = [
 ]
 
 
-class Note:
-    valid_flags = ["normal", "bomb", "death", "gold"]
+class DisplayNote:
+    valid_flags = ["normal"]
 
-    def __init__(self, lane: Literal[0, 1, 2, 3], position: float, length: float = 0.0, flag: str = "normal"):
-        self.lane = lane
-        self.position = position
-        self.length = length
-        self.flag = flag
-
-    def __str__(self) -> str:
-        flag = "" if self.flag == "normal" else self.flag.title() + " "
-        arrow = arrowmap[self.lane]
-        pos = f" P {round(self.position, 4)}"
-        length = "" if self.length == 0 else f" L {round(self.length, 4)}"
-        return f"<Note {flag}{arrow}{pos}{length}>"
+    def __init__(self, note: ChartNote):
+        self.note = note
+        self.hit_time = None
 
     @property
-    def sprite(self) -> Surface:
+    def lane(self):
+        return self.note.lane
+
+    @property
+    def pos(self):
+        return self.note.pos
+
+    @property
+    def pos_secs(self):
+        return self.note.pos_secs
+
+    @property
+    def length(self):
+        return self.note.length
+
+    @property
+    def flag(self):
+        return self.note.flag
+
+    @property
+    def hit(self):
+        return self.note.hit
+
+    @property
+    def missed(self):
+        return self.note.missed
+
+    @property
+    def sprite(self):
         surf = Surface((120, 120), flags = SRCALPHA)
         if self.flag not in self.valid_flags:
             return MISSING_TEXTURE
@@ -72,41 +92,19 @@ class Note:
         surf = pygame.transform.rotate(surf, anglemap[self.lane])
         return surf
 
-
-class DisplayNote:
-    def __init__(self, note: Note):
-        self.note = note
-        self.hit_time = None
-
-    @property
-    def lane(self):
-        return self.note.lane
-
-    @property
-    def position(self):
-        return self.note.position
-
-    @property
-    def length(self):
-        return self.note.length
-
-    @property
-    def flag(self):
-        return self.note.flag
-
-    @property
-    def sprite(self):
-        return self.note.sprite
+    def __repr__(self) -> str:
+        return self.note.__repr__().replace("Note", "DisplayNote")
 
     def __str__(self) -> str:
         return self.note.__str__().replace("Note", "DisplayNote")
 
 
 class Highway:
-    def __init__(self, notes: List[Note], size = (480, 720)) -> None:
-        self.notes = notes
+    def __init__(self, chart: Chart, size = (480, 720)) -> None:
+        self.notes = chart.notes
         self.size = size
         self.viewport_size = 0.75  # 750ms
+        self.y_buffer = 50
 
         self.current_pos = 0.0
 
@@ -122,9 +120,19 @@ class Highway:
 
     @property
     def current_notes(self):
-        return [note for note in self.notes if self.current_pos - 0.1 < note.pos <= self.current_pos + self.viewport_size]
+        return [note for note in self.notes if self.current_pos - 0.1 < note.pos_secs <= self.current_pos + self.viewport_size]
+
+    def get_note_pos(self, dn: DisplayNote):
+        x = dn.lane * self.sprite_size
+        offset = self.current_pos - dn.pos_secs
+        offset = -offset
+        y = (offset * self.px_per_sec) + self.y_buffer
+        return (x, y)
 
     def update(self, time):
+        self._image.fill(BLACK)
         self.current_pos = time
-        for note in self.current_notes:
-            pass
+        display_notes = [DisplayNote(note) for note in self.current_notes]
+        for note in display_notes:
+            pos = self.get_note_pos(note)
+            self._image.blit(note.sprite, pos)
