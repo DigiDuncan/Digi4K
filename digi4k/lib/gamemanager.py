@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from pygame.constants import K_d, K_f, K_j, K_k
 
 from digi4k.lib.objects.inputparser import InputParser
+from digi4k.lib.objects.keybinder import KeyBinder
 
 if TYPE_CHECKING:
     from digi4k.main import Game
@@ -31,15 +32,17 @@ class GameManager:
         self.input = InputManager()
         self.inputparser = InputParser(0, 0)
 
+        self.keybinder = KeyBinder()
+
     def update(self, events: list):
         now = music.elapsed
         self.input.update(events)
 
         lanemap = {
-            K_d: 0,
-            K_f: 1,
-            K_j: 2,
-            K_k: 3
+            self.keybinder.left: 0,
+            self.keybinder.down: 1,
+            self.keybinder.up: 2,
+            self.keybinder.right: 3
         }
 
         lanes = [lanemap[k] for k in self.input.justPressed]
