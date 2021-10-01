@@ -15,21 +15,20 @@ arrowmap = ["⬅", "⬇", "⬆", "➡"]
 
 @total_ordering
 class ChartNote:
-    def __init__(self, pos: float, lane: int, length: float):  # I think every time should be in ms and sure
-        self.pos = pos                                         # I guess we'll use floats since precision
-        self.lane = lane                                       # isn't *that* important right?
+    def __init__(self, pos: float, lane: int, length: float):  # pos is in seconds
+        self.pos = pos                                         # float percision is fine
+        self.lane = lane                                       # don't worry about it
         self.length = length
         self.flag = Flags.normal  # currently unused
 
         self.hit = False
         self.missed = False
 
-    @property
-    def pos_secs(self):
-        return self.pos / 1000
+    def hittable(self, current_time: float, window_ms: tuple[float, float]):
+        # window is passed in in ms because everyone thinks of windows in ms
+        window = window_ms[0] / 1000, window_ms[1] / 1000
 
-    def hittable(self, current_time: float, window: tuple[float, float]):
-        offset = current_time * 1000 - self.pos
+        offset = current_time - self.pos
 
         # window is a tuple of the amount early you can be and the amount late you can be
         window_front_end, window_back_end = window
@@ -64,10 +63,6 @@ class ChartEvent:
         self.pos = pos                                  # a hundred subclasses
         self.name = name
         self.data = data
-
-    @property
-    def pos_secs(self):
-        return self.pos / 1000
 
 
 class Chart:

@@ -1,4 +1,4 @@
-from importlib.resources import files, path
+from importlib.resources import path
 
 import pygame
 import pygame.draw
@@ -54,10 +54,6 @@ class DisplayNote:
     @property
     def pos(self):
         return self.note.pos
-
-    @property
-    def pos_secs(self):
-        return self.note.pos_secs
 
     @property
     def length(self):
@@ -140,11 +136,12 @@ class Highway:
 
     @property
     def current_notes(self):
-        return [note for note in self.notes if self.current_pos - 0.1 < note.pos_secs <= self.current_pos + self.viewport_size]
+        # This isn't a good way of doing this
+        return [note for note in self.notes if self.current_pos - 1 < note.pos <= self.current_pos + self.viewport_size]
 
     def get_note_pos(self, dn: DisplayNote):
         x = dn.lane * self.sprite_size
-        offset = self.current_pos - dn.pos_secs
+        offset = self.current_pos - dn.pos
         offset = -offset
         y = (offset * self.px_per_sec) + self.y_buffer
         return (x, y)
@@ -172,8 +169,8 @@ class EventViewer:
         return "missing"
 
     def update(self, time):
-        event = next([e for e in self.events if e.pos_secs <= time][::-1])
-        current_offset = round(time - event.pos_secs, 3)
+        event = next([e for e in self.events if e.pos <= time][::-1])
+        current_offset = round(time - event.pos, 3)
         iconpath = path(digi4k.data.images.debug) / (self.event_to_icon(event) + ".png")
         fontpath = path(digi4k.data.fonts) / "debug.ttf"
         icon = pygame.image.load(iconpath)
