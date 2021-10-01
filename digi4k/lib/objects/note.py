@@ -102,17 +102,23 @@ class Song:
         songevents: list[ChartEvent] = []
         p1events: list[ChartEvent] = []
         p2events: list[ChartEvent] = []
-        sections = song["notes"]
+        sections: list[dict] = song["notes"]
+        lastBPM = bpm
         lastMHS = None
+        timesofar: float = 0
         for section in sections:
+            # There's a changeBPM event but like, it always has to be paired
+            # with a bpm, so it's pointless anyway
+            if newbpm := section.get("bpm", None) != lastBPM:
+                songevents.append(ChartEvent(timesofar, "change_bpm", {"bpm": newbpm}))
 
             # Create a camera focus event like they should have in the first place
             mustHitSection: bool = section["mustHitSection"]
             if mustHitSection != lastMHS:
-                if mustHitSection is True:  # fuck how do I get the current pos here
-                    songevents.append(ChartEvent(..., "camera_focus", focus = "player1"))
+                if mustHitSection is True:
+                    songevents.append(ChartEvent(timesofar, "camera_focus", focus = "player1"))
                 else:
-                    songevents.append(ChartEvent(..., "camera_focus", focus = "player2"))
+                    songevents.append(ChartEvent(timesofar, "camera_focus", focus = "player2"))
 
             # Actually make two charts
             sectionNotes: list = section["sectionNotes"]
@@ -131,6 +137,17 @@ class Song:
                             p1notes.append(ChartNote(pos, lane - 4, length))
                         elif lane in low:
                             p2notes.append(ChartNote(pos, lane, length))
+
+            # Since in theory you can have events in these sections
+            # without there being notes there, I need to calculate where this
+            # section occurs from scratch, and some engines have a startTime
+            # thing here but I can't guarantee it so it's basically pointless
+            seconds_per_beat = 60 / lastBPM
+            seconds_per_measure = seconds_per_beat * 4
+            seconds_per_sixteenth = seconds_per_measure / 16
+            time_this_section = section["lengthInSteps"] * seconds_per_sixteenth
+            timesofar += time_this_section
+
         # diff is hardcoded right now because I don't know how to extract it from
         # the chart. I think it's just based on the name.
         return Song(name = name, diff = 2, bpm = bpm, charts = [
