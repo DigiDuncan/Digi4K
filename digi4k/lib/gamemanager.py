@@ -13,7 +13,7 @@ from importlib.resources import files
 from nygame import music
 
 import digi4k.data.tutorial
-from digi4k.lib.draw_objects import Highway
+from digi4k.lib.draw_objects import EventViewer, Highway
 from digi4k.lib.inputmanager import InputManager
 from digi4k.lib.objects.note import Song
 
@@ -32,9 +32,12 @@ class GameManager:
 
         self.keybinder = KeyBinder()
 
+        self.eventviewer = EventViewer(self.song.events)
+
     def update(self, events: list):
         now = music.elapsed
         self.input.update(events)
+        self.eventviewer.update(now)
 
         lanemap = {
             self.keybinder.left: 0,
@@ -54,5 +57,8 @@ class GameManager:
         highway_p1_rect.midright = self.game.surface.get_rect().midright
         highway_p2_rect = self.highway_p2._image.get_rect()
         highway_p2_rect.midleft = self.game.surface.get_rect().midleft
+        eventviewer_rect = self.eventviewer.image.get_rect()
+        eventviewer_rect.center = self.game.surface.get_rect().center
         self.game.surface.blit(self.highway_p1._image, highway_p1_rect)
         self.game.surface.blit(self.highway_p2._image, highway_p2_rect)
+        self.game.surface.blit(self.eventviewer.image, eventviewer_rect)

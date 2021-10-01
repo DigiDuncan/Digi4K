@@ -158,21 +158,27 @@ class Highway:
 class EventViewer:
     def __init__(self, events: list[ChartEvent]):
         self.events: list[ChartEvent] = sorted(events)
-        self.image = Surface((64, 64))
+        self.image = Surface((64, 64), flags = SRCALPHA)
         self.module = digi4k.data.images.debug
 
     def event_to_icon(self, event: ChartEvent) -> Surface:
-        if event.name == "camera_focus" and event.data == {"player": 1}:
-            return "camera_p1"
-        elif event.name == "camera_focus" and event.data == {"player": 1}:
-            return "camera_p2"
+        if event.name == "camera_focus" and event.data == {"focus": "player1"}:
+            return "cam_p1"
+        elif event.name == "camera_focus" and event.data == {"focus": "player2"}:
+            return "cam_p2"
         return "missing"
 
-    def update(self, time):
-        event = next([e for e in self.events if e.pos <= time][::-1])
+    def update(self, time: float):
+        self.image.fill(CLEAR)
+        eventlist = [e for e in self.events if e.pos <= time][::-1]
+        if not eventlist:
+            return
+        event = eventlist[0]
         current_offset = round(time - event.pos, 3)
-        iconpath = path(digi4k.data.images.debug) / (self.event_to_icon(event) + ".png")
-        fontpath = path(digi4k.data.fonts) / "debug.ttf"
-        icon = pygame.image.load(iconpath)
+
+        with path(digi4k.data.images.debug, self.event_to_icon(event) + ".png") as iconpath:
+            icon = pygame.image.load(iconpath)
         self.image.blit(icon, (16, 0))
-        ptext.drawbox(str(current_offset), (0, 32, 64, 32), fontname = fontpath)
+        with path(digi4k.data.fonts, "debug.ttf") as fontpath:
+            text = ptext.drawbox(str(current_offset), (0, 32, 64, 32), fontname = fontpath)
+        self.image.blit(*text)

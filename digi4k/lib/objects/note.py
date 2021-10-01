@@ -58,11 +58,15 @@ class ChartNote:
 
 # This is for stuff in charts that's not notes
 # This probably is a bad idea but I don't want to think of every type of event rn
+@total_ordering
 class ChartEvent:
     def __init__(self, pos: float, name: str, **data):  # The **data thing means I don't need to make like
         self.pos = pos                                  # a hundred subclasses
         self.name = name
         self.data = data
+
+    def __lt__(self, other):
+        self.pos < other.pos
 
 
 class Chart:
@@ -105,7 +109,7 @@ class Song:
             # There's a changeBPM event but like, it always has to be paired
             # with a bpm, so it's pointless anyway
             if newbpm := section.get("bpm", None) != lastBPM:
-                songevents.append(ChartEvent(timesofar, "change_bpm", {"bpm": newbpm}))
+                songevents.append(ChartEvent(timesofar, "change_bpm", bpm = newbpm))
 
             # Create a camera focus event like they should have in the first place
             mustHitSection: bool = section["mustHitSection"]
@@ -122,6 +126,7 @@ class Song:
                     low = (0, 1, 2, 3)  # wow look at the hardcoding~!
                     high = (4, 5, 6, 7)
                     pos, lane, length = note  # hope this never breaks lol
+                    pos /= 1000
                     if mustHitSection:
                         if lane in low:
                             p1notes.append(ChartNote(pos, lane, length))
