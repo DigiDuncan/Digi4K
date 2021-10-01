@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from importlib.resources import path
 
 from pygame.color import Color
+from pygame.constants import K_SPACE
 
 from digi4k.lib.objects.inputparser import InputParser
 from digi4k.lib.objects.keybinder import KeyBinder
@@ -48,6 +49,9 @@ class GameManager:
         now = music.elapsed
         self.input.update(events)
         self.eventviewer.update(now)
+
+        if K_SPACE in self.input.justPressed:
+            music.playpause()
 
         lanemap = {
             self.keybinder.left: 0,
