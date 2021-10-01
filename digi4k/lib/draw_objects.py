@@ -124,11 +124,15 @@ class Highway:
 
         self.current_pos = 0.0
 
-        self._image = Surface(self.size, flags = pygame.SRCALPHA)
+        self.image = Surface(self.size, flags = pygame.SRCALPHA)
 
     @property
     def sprite_size(self):
         return self.size[0] // 4
+
+    @property
+    def zero(self):
+        return self.y_buffer + (self.sprite_size / 2)
 
     @property
     def px_per_sec(self):
@@ -143,22 +147,23 @@ class Highway:
         x = dn.lane * self.sprite_size
         offset = self.current_pos - dn.pos
         offset = -offset
-        y = (offset * self.px_per_sec) + self.y_buffer
+        y = (offset * self.px_per_sec) + self.zero
         return (x, y)
 
     def update(self, time):
-        self._image.fill(BLACK)
+        self.image.fill(BLACK)
+        pygame.draw.line(self.image, Color(0xFF0000FF), (0, self.zero), (self.size[1], self.zero), 3)
         self.current_pos = time
         display_notes = [DisplayNote(note) for note in self.current_notes]
         for note in display_notes:
             pos = self.get_note_pos(note)
-            self._image.blit(note.sprite, pos)
+            self.image.blit(note.sprite, pos)
 
 
 class EventViewer:
     def __init__(self, events: list[ChartEvent]):
         self.events: list[ChartEvent] = sorted(events)
-        self.image = Surface((64, 64), flags = SRCALPHA)
+        self._image = Surface((64, 64), flags = SRCALPHA)
         self.module = digi4k.data.images.debug
 
     def event_to_icon(self, event: ChartEvent) -> Surface:
@@ -171,7 +176,7 @@ class EventViewer:
         return "missing"
 
     def update(self, time: float):
-        self.image.fill(CLEAR)
+        self._image.fill(CLEAR)
         eventlist = [e for e in self.events if e.pos <= time][::-1]
         if not eventlist:
             return
@@ -185,8 +190,12 @@ class EventViewer:
 
         icon = pygame.image.load(iconpath)
         if event.name == "change_bpm":
-            bpmtext = ptext.draw(str(round(event.data["bpm"], 2)), size=12, fontname = fontpath, color = Color(0xAA00AA), toplet = (0, 16))
+            bpmtext = ptext.draw(str(round(event.data["bpm"], 2)), fontsize = 12, fontname = fontpath, color = Color(0xAA00AA), topleft = (0, 16))
             icon.blit(*bpmtext)
-        self.image.blit(icon, (16, 0))
+        self._image.blit(icon, (16, 0))
         text = ptext.drawbox(str(current_offset), (0, 32, 64, 32), fontname = fontpath, color = BLACK)
-        self.image.blit(*text)
+        self._image.blit(*text)
+
+    @property
+    def image(self) -> Surface:
+        return pygame.transform.scale(self._image, (128, 128))
