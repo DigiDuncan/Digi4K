@@ -166,6 +166,8 @@ class EventViewer:
             return "cam_p1"
         elif event.name == "camera_focus" and event.data == {"focus": "player2"}:
             return "cam_p2"
+        elif event.name == "change_bpm":
+            return "bpm"
         return "missing"
 
     def update(self, time: float):
@@ -176,9 +178,15 @@ class EventViewer:
         event = eventlist[0]
         current_offset = round(time - event.pos, 3)
 
-        with path(digi4k.data.images.debug, self.event_to_icon(event) + ".png") as iconpath:
-            icon = pygame.image.load(iconpath)
+        with path(digi4k.data.images.debug, self.event_to_icon(event) + ".png") as ip:
+            iconpath = ip
+        with path(digi4k.data.fonts, "debug.ttf") as fp:
+            fontpath = fp
+
+        icon = pygame.image.load(iconpath)
+        if event.name == "change_bpm":
+            bpmtext = ptext.draw(str(round(event.data["bpm"], 2)), size=12, fontname = fontpath, color = Color(0xAA00AA), toplet = (0, 16))
+            icon.blit(*bpmtext)
         self.image.blit(icon, (16, 0))
-        with path(digi4k.data.fonts, "debug.ttf") as fontpath:
-            text = ptext.drawbox(str(current_offset), (0, 32, 64, 32), fontname = fontpath)
+        text = ptext.drawbox(str(current_offset), (0, 32, 64, 32), fontname = fontpath, color = BLACK)
         self.image.blit(*text)
