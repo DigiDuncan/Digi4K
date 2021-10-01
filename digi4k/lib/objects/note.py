@@ -108,7 +108,8 @@ class Song:
         for section in sections:
             # There's a changeBPM event but like, it always has to be paired
             # with a bpm, so it's pointless anyway
-            if newbpm := section.get("bpm", None) != lastBPM:
+            newbpm = section.get("bpm", None)
+            if newbpm is not None and newbpm != lastBPM:
                 songevents.append(ChartEvent(timesofar, "change_bpm", bpm = newbpm))
 
             # Create a camera focus event like they should have in the first place
@@ -118,6 +119,7 @@ class Song:
                     songevents.append(ChartEvent(timesofar, "camera_focus", focus = "player1"))
                 else:
                     songevents.append(ChartEvent(timesofar, "camera_focus", focus = "player2"))
+                lastMHS = mustHitSection
 
             # Actually make two charts
             sectionNotes: list = section["sectionNotes"]
