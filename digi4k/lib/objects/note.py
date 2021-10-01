@@ -65,6 +65,10 @@ class ChartEvent:
         self.name = name
         self.data = data
 
+    @property
+    def pos_secs(self):
+        return self.pos / 1000
+
 
 class Chart:
     def __init__(self,  player: int, notespeed: float, notes: list[ChartNote], events: list[ChartEvent]):

@@ -1,12 +1,18 @@
+from importlib.resources import files, path
+
 import pygame
 import pygame.draw
+import pygame.image
 import pygame.transform
 from pygame import Rect
 from pygame.color import Color
 from pygame.constants import SRCALPHA
 from pygame.surface import Surface
 
-from digi4k.lib.objects.note import Chart, ChartNote
+import digi4k.data.fonts
+import digi4k.data.images.debug
+from digi4k.lib import ptext
+from digi4k.lib.objects.note import Chart, ChartEvent, ChartNote
 
 MISSING_TEXTURE = Surface((120, 120))
 MISSING_TEXTURE.fill(0xFF00FF)
@@ -150,3 +156,26 @@ class Highway:
         for note in display_notes:
             pos = self.get_note_pos(note)
             self._image.blit(note.sprite, pos)
+
+
+class EventViewer:
+    def __init__(self, events: list[ChartEvent]):
+        self.events: list[ChartEvent] = sorted(events)
+        self.image = Surface((64, 64))
+        self.module = digi4k.data.images.debug
+
+    def event_to_icon(self, event: ChartEvent) -> Surface:
+        if event.name == "camera_focus" and event.data == {"player": 1}:
+            return "camera_p1"
+        elif event.name == "camera_focus" and event.data == {"player": 1}:
+            return "camera_p2"
+        return "missing"
+
+    def update(self, time):
+        event = next([e for e in self.events if e.pos_secs <= time][::-1])
+        current_offset = round(time - event.pos_secs, 3)
+        iconpath = path(digi4k.data.images.debug) / (self.event_to_icon(event) + ".png")
+        fontpath = path(digi4k.data.fonts) / "debug.ttf"
+        icon = pygame.image.load(iconpath)
+        self.image.blit(icon, (16, 0))
+        ptext.drawbox(str(current_offset), (0, 32, 64, 32), fontname = fontpath)
