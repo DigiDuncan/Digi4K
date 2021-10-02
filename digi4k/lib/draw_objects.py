@@ -13,6 +13,7 @@ import digi4k.data.fonts
 import digi4k.data.images.debug
 from digi4k.lib import ptext
 from digi4k.lib.inputmanager import InputManager
+from digi4k.lib.objects.keybinder import KeyBinder
 from digi4k.lib.objects.note import Chart, ChartEvent, ChartNote
 
 MISSING_TEXTURE = Surface((120, 120))
@@ -41,7 +42,7 @@ up_arrow_shape = [
 
 
 class DisplayNote:
-    valid_flags = ["normal"]
+    valid_flags = ["normal", "fake"]
     cache = {}
 
     def __init__(self, note: ChartNote):
@@ -123,12 +124,13 @@ class DisplayNote:
 
 
 class Highway:
-    def __init__(self, chart: Chart, size = (480, 720), inputmanager: InputManager = None):
+    def __init__(self, chart: Chart, size = (480, 720), inputmanager: InputManager = None, keybinder: KeyBinder = None):
         self.notes = chart.notes
         self.size = size
         self.input = inputmanager
+        self.keybinder = keybinder
         self.viewport_size = 0.75  # 750ms
-        self.y_buffer = 50
+        self.y_buffer = 100
 
         self.current_pos = 0.0
 
@@ -140,7 +142,7 @@ class Highway:
 
     @property
     def zero(self):
-        return self.y_buffer + (self.sprite_size / 2)
+        return self.y_buffer
 
     @property
     def px_per_sec(self):
@@ -155,7 +157,7 @@ class Highway:
         x = dn.lane * self.sprite_size
         offset = self.current_pos - dn.pos
         offset = -offset
-        y = (offset * self.px_per_sec) + self.zero
+        y = (offset * self.px_per_sec) + self.zero - (self.sprite_size / 2)
         return (x, y)
 
     def update(self, time):
@@ -164,7 +166,35 @@ class Highway:
         pygame.draw.line(self.image, Color(0xFF0000FF), (0, self.zero), (self.size[1], self.zero), 3)
 
         # Strikeline
+        if self.input and self.keybinder:
+            lanemap = {
+                self.keybinder.left: 0,
+                self.keybinder.down: 1,
+                self.keybinder.up: 2,
+                self.keybinder.right: 3
+            }
 
+            lanes = [lanemap[k] for k in self.input.pressed if k in lanemap]
+
+            strikenotes = []
+            for lane in range(4):
+                n = ChartNote(time, lane, 0)
+                if lane not in lanes:
+                    n.flag = "fake"
+                strikenotes.append(n)
+            for note in strikenotes:
+                dn = DisplayNote(note)
+                pos = self.get_note_pos(dn)
+                dn.sprite.set_alpha(128)
+                self.image.blit(dn.sprite, pos)
+        else:
+            for lane in range(4):
+                n = ChartNote(time, lane, 0)
+                n.flag = "fake"
+                dn = DisplayNote(n)
+                pos = self.get_note_pos(dn)
+                dn.sprite.set_alpha(128)
+                self.image.blit(dn.sprite, pos)
 
         # Real notes
         self.current_pos = time

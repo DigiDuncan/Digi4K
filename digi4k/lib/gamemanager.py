@@ -29,14 +29,14 @@ class GameManager:
         self.game = game
         self.song_file = j = json.loads(files(digi4k.data.charts.test).joinpath("test.json").read_text())
         self.song = Song.from_json(j)
-        self.highway_p1 = Highway(self.song.charts[0])
-        self.highway_p2 = Highway(self.song.charts[1])
         music.play(files(digi4k.data.charts.test).joinpath("Inst.ogg"))
 
         self.input = InputManager()
         self.inputparser = InputParser(0, 0)
-
         self.keybinder = KeyBinder()
+
+        self.highway_p1 = Highway(self.song.charts[0], inputmanager = self.input, keybinder = self.keybinder)
+        self.highway_p2 = Highway(self.song.charts[1])
 
         self.eventviewer = EventViewer(self.song.events)
 
