@@ -70,7 +70,7 @@ class GameManager:
             self.last_acc = accs[-1]
         if self.last_acc is not None:
             acc_str = str(round(self.last_acc * 1000)) + "ms"
-            ptext.draw(acc_str, midtop = (self.game.surface.get_rect().centerx, 100), fontname = self.font, fontsize = 60, color = Color(0x000000), surf = self.game.surface)
+            ptext.draw(acc_str, midtop = (self.game.surface.get_rect().centerx, 75), fontname = self.font, fontsize = 60, color = Color(0x000000), surf = self.game.surface)
 
         # Draws
         self.highway_p1.update(now)

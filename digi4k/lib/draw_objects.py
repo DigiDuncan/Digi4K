@@ -134,6 +134,7 @@ class Highway:
         self.keybinder = keybinder
         self.viewport_size = 0.75  # 750ms
         self.y_buffer = 100
+        self.show_zero = False
 
         self.current_pos = 0.0
 
@@ -166,9 +167,10 @@ class Highway:
     def update(self, time):
         # Base stuff
         self.image.fill(BLACK)
-        pygame.draw.line(self.image, Color(0xFF0000FF), (0, self.zero), (self.size[1], self.zero), 3)
+        if self.show_zero:
+            pygame.draw.line(self.image, Color(0xFF0000FF), (0, self.zero), (self.size[1], self.zero), 3)
 
-        # Strikeline
+        # Strikeline [bad, drops frames, make better]
         if self.input and self.keybinder:
             lanemap = {
                 self.keybinder.left: 0,
@@ -187,7 +189,7 @@ class Highway:
                 strikenotes.append(n)
             for note in strikenotes:
                 dn = DisplayNote(note)
-                pos = self.get_note_pos(dn)
+                pos = self.get_note_pos(dn)[0], self.zero - (self.sprite_size / 2)
                 dn.alpha = 128
                 self.image.blit(dn.sprite, pos)
         else:
@@ -195,7 +197,7 @@ class Highway:
                 n = ChartNote(time, lane, 0)
                 n.flag = "fake"
                 dn = DisplayNote(n)
-                pos = self.get_note_pos(dn)
+                pos = self.get_note_pos(dn)[0], self.zero - (self.sprite_size / 2)
                 dn.alpha = 128
                 self.image.blit(dn.sprite, pos)
 
