@@ -1,19 +1,18 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from importlib.resources import path
+from importlib.resources import files
 
 from pygame.color import Color
 from pygame.constants import K_SPACE
 
-from digi4k.lib.objects.inputparser import InputParser
 from digi4k.lib.objects.keybinder import KeyBinder
+from digi4k.lib.objects.songmanager import SongManager
 
 if TYPE_CHECKING:
     from digi4k.main import Game
 
 import json
-from importlib.resources import files
 
 from nygame import music
 
@@ -34,36 +33,24 @@ class GameManager:
         music.play(files(digi4k.data.charts.test).joinpath("Inst.ogg"))
 
         self.input = InputManager()
-        self.inputparser = InputParser(0, 0)
-
         self.keybinder = KeyBinder()
-
         self.eventviewer = EventViewer(self.song.events)
 
-        self.hits = 0
+        self.songmanager = SongManager(self.song, self.input, self.keybinder)
 
-        with path(digi4k.data.fonts, "debug.ttf") as fp:
-            self.font = fp
+        self.font = files(digi4k.data.fonts) / "debug.ttf"
 
     def update(self, events: list):
         now = music.elapsed
         self.input.update(events)
         self.eventviewer.update(now)
+        self.songmanager.update(now)
 
         if K_SPACE in self.input.justPressed:
             music.playpause()
 
-        lanemap = {
-            self.keybinder.left: 0,
-            self.keybinder.down: 1,
-            self.keybinder.up: 2,
-            self.keybinder.right: 3
-        }
-
-        lanes = [lanemap[k] for k in self.input.justPressed if k in lanemap]
-
-        self.hits += self.inputparser.try_hit_note(now, lanes, self.song.charts[0])
-        ptext.draw(str(self.hits), midtop = self.game.surface.get_rect().midtop, fontname = self.font, fontsize = 100, color = Color(0x000000), surf = self.game.surface)
+        hits = self.songmanager.hits
+        ptext.draw(str(hits), midtop = self.game.surface.get_rect().midtop, fontname = self.font, fontsize = 100, color = Color(0x000000), surf = self.game.surface)
 
         # Draws
         self.highway_p1.update(now)

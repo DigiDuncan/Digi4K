@@ -1,4 +1,4 @@
-from importlib.resources import path
+from importlib.resources import files
 
 import pygame
 import pygame.draw
@@ -120,7 +120,7 @@ class Highway:
         self.notes = chart.notes
         self.size = size
         self.viewport_size = 0.75  # 750ms
-        self.y_buffer = 50
+        self.y_buffer = 100
 
         self.current_pos = 0.0
 
@@ -132,7 +132,7 @@ class Highway:
 
     @property
     def zero(self):
-        return self.y_buffer + (self.sprite_size / 2)
+        return self.y_buffer
 
     @property
     def px_per_sec(self):
@@ -147,7 +147,7 @@ class Highway:
         x = dn.lane * self.sprite_size
         offset = self.current_pos - dn.pos
         offset = -offset
-        y = (offset * self.px_per_sec) + self.zero
+        y = (offset * self.px_per_sec) + self.zero - (self.sprite_size / 2)
         return (x, y)
 
     def update(self, time):
@@ -183,19 +183,16 @@ class EventViewer:
         event = eventlist[0]
         current_offset = round(time - event.pos, 3)
 
-        with path(digi4k.data.images.debug, self.event_to_icon(event) + ".png") as ip:
-            iconpath = ip
-        with path(digi4k.data.fonts, "debug.ttf") as fp:
-            fontpath = fp
+        iconpath = files(digi4k.data.images.debug) / (self.event_to_icon(event) + ".png")
+        fontpath = files(digi4k.data.fonts) / "debug.ttf"
 
         icon = pygame.image.load(iconpath)
         if event.name == "change_bpm":
-            bpmtext = ptext.draw(str(round(event.data["bpm"], 2)), fontsize = 12, fontname = fontpath, color = Color(0xAA00AA), topleft = (0, 16))
-            icon.blit(*bpmtext)
+            ptext.draw(str(round(event.data["bpm"], 2)), fontsize = 12, fontname = fontpath, color = Color(0xAA00AA), topleft = (0, 16), surf = icon)
+
         self._image.blit(icon, (16, 0))
-        text = ptext.drawbox(str(current_offset), (0, 32, 64, 32), fontname = fontpath, color = BLACK)
-        self._image.blit(*text)
+        ptext.drawbox(str(current_offset), (0, 32, 64, 32), fontname = fontpath, color = BLACK, surf = self._image)
 
     @property
     def image(self) -> Surface:
-        return pygame.transform.scale(self._image, (128, 128))
+        return pygame.transform.scale2x(self._image)
