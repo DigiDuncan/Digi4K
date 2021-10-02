@@ -112,8 +112,18 @@ class Song:
         sections: list[dict] = song["notes"]
         lastBPM = bpm
         lastMHS = None
+        notes_yet = False
         timesofar: float = 0
         for section in sections:
+            # Since in theory you can have events in these sections
+            # without there being notes there, I need to calculate where this
+            # section occurs from scratch, and some engines have a startTime
+            # thing here but I can't guarantee it so it's basically pointless
+            seconds_per_beat = 60 / lastBPM
+            seconds_per_measure = seconds_per_beat * 4
+            seconds_per_sixteenth = seconds_per_measure / 16
+            time_this_section = section["lengthInSteps"] * seconds_per_sixteenth
+
             # There's a changeBPM event but like, it always has to be paired
             # with a bpm, so it's pointless anyway
             newbpm = section.get("bpm", None)
@@ -129,8 +139,17 @@ class Song:
                     songevents.append(ChartEvent(timesofar, "camera_focus", focus = "player2"))
                 lastMHS = mustHitSection
 
-            # Actually make two charts
             sectionNotes: list = section["sectionNotes"]
+
+            # 3, 2, 1, Go!
+            if sectionNotes:
+                if notes_yet is False:
+                    notes_yet = True
+                    messages = ["3", "2", "1", "go"]
+                    for i in range(0, 16, 4):
+                        songevents.append(ChartEvent(timesofar - seconds_per_measure + (seconds_per_sixteenth * i), "announcer", message = messages.pop(0)))
+
+            # Actually make two charts
             if sectionNotes:
                 for note in sectionNotes:
                     low = (0, 1, 2, 3)  # wow look at the hardcoding~!
@@ -148,14 +167,7 @@ class Song:
                         elif lane in low:
                             p2notes.append(ChartNote(pos, lane, length))
 
-            # Since in theory you can have events in these sections
-            # without there being notes there, I need to calculate where this
-            # section occurs from scratch, and some engines have a startTime
-            # thing here but I can't guarantee it so it's basically pointless
-            seconds_per_beat = 60 / lastBPM
-            seconds_per_measure = seconds_per_beat * 4
-            seconds_per_sixteenth = seconds_per_measure / 16
-            time_this_section = section["lengthInSteps"] * seconds_per_sixteenth
+            # Increment current time
             timesofar += time_this_section
 
         # diff is hardcoded right now because I don't know how to extract it from

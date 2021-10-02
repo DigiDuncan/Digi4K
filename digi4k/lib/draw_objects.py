@@ -222,6 +222,8 @@ class EventViewer:
             return "cam_p2"
         elif event.name == "change_bpm":
             return "bpm"
+        elif event.name == "announcer":
+            return f"announcer_{event.data['message']}"
         return "missing"
 
     def update(self, time: float):
