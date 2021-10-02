@@ -47,6 +47,7 @@ class DisplayNote:
 
     def __init__(self, note: ChartNote):
         self.note = note
+        self.alpha = 255
 
     @property
     def lane(self):
@@ -79,7 +80,7 @@ class DisplayNote:
     # This will need to be adjusted later to account for, like, everything.
     @property
     def caching_key(self):
-        return self.note.lane, self.note.length, self.note.flag, self.note.hit, self.note.missed
+        return self.note.lane, self.note.length, self.note.flag, self.note.hit, self.note.missed, self.alpha
 
     @property
     def sprite(self):
@@ -112,6 +113,8 @@ class DisplayNote:
 
         if self.hit:
             surf.set_alpha(0)
+        else:
+            surf.set_alpha(self.alpha)
 
         self.cache[self.caching_key] = surf
         return surf
@@ -185,7 +188,7 @@ class Highway:
             for note in strikenotes:
                 dn = DisplayNote(note)
                 pos = self.get_note_pos(dn)
-                dn.sprite.set_alpha(128)
+                dn.alpha = 128
                 self.image.blit(dn.sprite, pos)
         else:
             for lane in range(4):
@@ -193,7 +196,7 @@ class Highway:
                 n.flag = "fake"
                 dn = DisplayNote(n)
                 pos = self.get_note_pos(dn)
-                dn.sprite.set_alpha(128)
+                dn.alpha = 128
                 self.image.blit(dn.sprite, pos)
 
         # Real notes
