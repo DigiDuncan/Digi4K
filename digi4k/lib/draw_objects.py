@@ -45,7 +45,6 @@ class DisplayNote:
 
     def __init__(self, note: ChartNote):
         self.note = note
-        self.hit_time = None
 
     @property
     def lane(self):
@@ -66,6 +65,10 @@ class DisplayNote:
     @property
     def hit(self):
         return self.note.hit
+
+    @property
+    def hit_time(self):
+        return self.note.hit_time
 
     @property
     def missed(self):

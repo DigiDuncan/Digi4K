@@ -41,6 +41,7 @@ class GameManager:
         self.eventviewer = EventViewer(self.song.events)
 
         self.hits = 0
+        self.last_acc = None
 
         with path(digi4k.data.fonts, "debug.ttf") as fp:
             self.font = fp
@@ -62,8 +63,14 @@ class GameManager:
 
         lanes = [lanemap[k] for k in self.input.justPressed if k in lanemap]
 
-        self.hits += self.inputparser.try_hit_note(now, lanes, self.song.charts[0])
+        hits, accs = self.inputparser.try_hit_note(now, lanes, self.song.charts[0])
+        self.hits += hits
         ptext.draw(str(self.hits), midtop = self.game.surface.get_rect().midtop, fontname = self.font, fontsize = 100, color = Color(0x000000), surf = self.game.surface)
+        if accs:
+            self.last_acc = accs[-1]
+        if self.last_acc is not None:
+            acc_str = str(round(self.last_acc * 1000)) + "ms"
+            ptext.draw(acc_str, midtop = (self.game.surface.get_rect().centerx, 100), fontname = self.font, fontsize = 60, color = Color(0x000000), surf = self.game.surface)
 
         # Draws
         self.highway_p1.update(now)

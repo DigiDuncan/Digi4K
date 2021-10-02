@@ -22,6 +22,7 @@ class ChartNote:
         self.flag = Flags.normal  # currently unused
 
         self.hit = False
+        self.hit_time = None
         self.missed = False
 
     def hittable(self, current_time: float, window_ms: tuple[float, float]):
@@ -39,6 +40,12 @@ class ChartNote:
     @property
     def lane_name(self):
         return ["left", "down", "up", "right"][self.lane]
+
+    @property
+    def hit_offset(self):
+        if self.hit_time is not None:
+            return self.hit_time - self.pos
+        return None
 
     def __lt__(self, other):
         self.pos < other.pos
