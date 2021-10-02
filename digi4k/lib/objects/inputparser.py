@@ -4,8 +4,11 @@ from digi4k.lib.objects.note import Chart, ChartNote
 class InputParser:
     def __init__(self, front_end, back_end):
         # Hardcoding these now sorry
-        self.front_end = 166 * (2 / 3)
-        self.back_end = 166 * (1 / 3)
+        # technically this is backwards from FNF but it feels more correct
+        # maybe I'm reading the code wrong
+        # ¯\_(ツ)_/¯
+        self.front_end = 166 * (1 / 3)
+        self.back_end = 166 * (2 / 3)
 
     def try_hit_note(self, current_time: float, lanes: list[int], chart: Chart) -> tuple[int, list[float]]:
         notes = chart.notes
