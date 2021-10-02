@@ -12,6 +12,7 @@ from pygame.surface import Surface
 import digi4k.data.fonts
 import digi4k.data.images.debug
 from digi4k.lib import ptext
+from digi4k.lib.inputmanager import InputManager
 from digi4k.lib.objects.note import Chart, ChartEvent, ChartNote
 
 MISSING_TEXTURE = Surface((120, 120))
@@ -100,13 +101,16 @@ class DisplayNote:
         elif self.flag == "gold":
             color = Color(0xAAAA00FF)
             outline = Color(0xAA6600FF)
+        elif self.flag == "fake":
+            color = Color(0xCCCCCCFF)
+            outline = Color(0x333333FF)
 
         pygame.draw.polygon(surf, color, up_arrow_shape, 0)
         pygame.draw.lines(surf, outline, True, up_arrow_shape, 6)
         surf = pygame.transform.rotate(surf, anglemap[self.lane])
 
         if self.hit:
-            surf.set_alpha(100)
+            surf.set_alpha(0)
 
         self.cache[self.caching_key] = surf
         return surf
@@ -119,9 +123,10 @@ class DisplayNote:
 
 
 class Highway:
-    def __init__(self, chart: Chart, size = (480, 720)) -> None:
+    def __init__(self, chart: Chart, size = (480, 720), inputmanager: InputManager = None):
         self.notes = chart.notes
         self.size = size
+        self.input = inputmanager
         self.viewport_size = 0.75  # 750ms
         self.y_buffer = 50
 
@@ -154,8 +159,14 @@ class Highway:
         return (x, y)
 
     def update(self, time):
+        # Base stuff
         self.image.fill(BLACK)
         pygame.draw.line(self.image, Color(0xFF0000FF), (0, self.zero), (self.size[1], self.zero), 3)
+
+        # Strikeline
+
+
+        # Real notes
         self.current_pos = time
         display_notes = [DisplayNote(note) for note in self.current_notes]
         for note in display_notes:

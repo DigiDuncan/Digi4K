@@ -8,6 +8,7 @@ from functools import total_ordering
 
 class Flags:
     normal = "normal"
+    fake = "fake"
 
 
 arrowmap = ["⬅", "⬇", "⬆", "➡"]
