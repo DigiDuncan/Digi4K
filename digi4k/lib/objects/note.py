@@ -156,6 +156,7 @@ class Song:
                     high = (4, 5, 6, 7)
                     pos, lane, length = note  # hope this never breaks lol
                     pos /= 1000
+                    length /= 1000
                     if mustHitSection:
                         if lane in low:
                             p1notes.append(ChartNote(pos, lane, length))

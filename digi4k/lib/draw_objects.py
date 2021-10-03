@@ -155,7 +155,7 @@ class Highway:
     @property
     def current_notes(self):
         # This isn't a good way of doing this
-        return [note for note in self.notes if self.current_pos - 1 < note.pos <= self.current_pos + self.viewport_size]
+        return [note for note in self.notes if self.current_pos - note.length - 1 < note.pos <= self.current_pos + self.viewport_size]
 
     def get_note_pos(self, dn: DisplayNote):
         x = dn.lane * self.sprite_size
@@ -206,6 +206,10 @@ class Highway:
         display_notes = [DisplayNote(note) for note in self.current_notes]
         for note in display_notes:
             pos = self.get_note_pos(note)
+            if note.length > 0:
+                note_end = note.pos + note.length
+                end_pos = self.get_note_pos(ChartNote(note_end, note.lane, 0))
+                pygame.draw.line(self.image, colormap[note.lane], (pos[0] + self.sprite_size / 2, pos[1] + self.sprite_size / 2), (end_pos[0] + self.sprite_size / 2, end_pos[1] + self.sprite_size / 2), 25)
             self.image.blit(note.sprite, pos)
 
 
