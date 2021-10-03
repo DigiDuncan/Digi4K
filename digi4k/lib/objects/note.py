@@ -1,4 +1,5 @@
 from functools import total_ordering
+from typing import Optional
 
 
 # I'm calling it ChartNote because I don't want to put display stuff in this.
@@ -26,7 +27,7 @@ class ChartNote:
         self.hit_time = None
         self.missed = False
 
-    def hittable(self, current_time: float, window_ms: tuple[float, float]):
+    def hittable(self, current_time: float, window_ms: tuple[float, float]) -> bool:
         # window is passed in in ms because everyone thinks of windows in ms
         window = window_ms[0] / 1000, window_ms[1] / 1000
 
@@ -39,14 +40,18 @@ class ChartNote:
         return (not self.hit) and (not self.missed) and (window_front_end < offset < window_back_end)
 
     @property
-    def lane_name(self):
+    def lane_name(self) -> str:
         return ["left", "down", "up", "right"][self.lane]
 
     @property
-    def hit_offset(self):
+    def hit_offset(self) -> Optional[float]:
         if self.hit_time is not None:
             return self.hit_time - self.pos
         return None
+
+    @property
+    def end(self) -> float:
+        return self.pos + self.length
 
     def __lt__(self, other):
         self.pos < other.pos

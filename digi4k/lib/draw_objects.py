@@ -207,8 +207,7 @@ class Highway:
         for note in display_notes:
             pos = self.get_note_pos(note)
             if note.length > 0:
-                note_end = note.pos + note.length
-                end_pos = self.get_note_pos(ChartNote(note_end, note.lane, 0))
+                end_pos = self.get_note_pos(ChartNote(note.end, note.lane, 0))
                 pygame.draw.line(self.image, colormap[note.lane],
                                  (pos[0] + self.sprite_size / 2, pos[1] + self.sprite_size / 2),
                                  (end_pos[0] + self.sprite_size / 2, end_pos[1] + self.sprite_size / 2),
