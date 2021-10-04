@@ -1,0 +1,50 @@
+{
+    "song": {
+        "player2": "str",
+        "stage?": "str",
+        "gfVersion?": "str",
+        "player1": "str",
+        "speed": "float",
+        "needsVoices": "bool",
+        "sectionLengths?": [],
+        "song": "str",
+        "notes": [
+            {
+                "mustHitSection": "bool",
+                "typeOfSection?": "int",
+                "lengthInSteps": "int",
+                "sectionNotes": [
+                    [
+                        "float|int"
+                    ]
+                ],
+                "bpm?": "float",
+                "changeBPM?": "bool",
+                "altAnim?": "bool",
+                "altAnimNum?": "int",
+                "endTime?": "float",
+                "startTime?": "float"
+            }
+        ],
+        "bpm": "float",
+        "sections?": "int",
+        "validScore?": "bool",
+        "isHey?": "bool",
+        "cutsceneType?": "str",
+        "isSpooky?": "bool",
+        "isMoody?": "bool",
+        "uiType?": "str",
+        "gf?": "str",
+        "chartVersion?": "str",
+        "eventObjects?": [
+            {
+                "name": "str",
+                "position": "int",
+                "value": "int",
+                "type": "str"
+            }
+        ],
+        "noteStyle?": "str",
+        "polus?": "str"
+    }
+}
