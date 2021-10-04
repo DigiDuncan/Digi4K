@@ -1,4 +1,44 @@
+from __future__ import annotations
+
+from typing import Any, Iterable, Optional, TypedDict, Literal
 from functools import total_ordering
+
+# typing
+PlayerNum = Literal[1, 2]
+LaneNum = Literal[0, 1, 2, 3]
+JsonLaneNum = Literal[0, 1, 2, 3, 4, 5, 6, 7]
+Seconds = float
+Milliseconds = float
+Difficulty = Literal[1, 2, 3]
+
+
+class Difficulties:
+    EASY = 1
+    NORMAL = 2
+    HARD = 3
+
+
+class SongFileJson(TypedDict):
+    song: SongJson
+
+
+class SongJson(TypedDict):
+    song: str
+    bpm: float
+    speed: float
+    notes: list[NoteJson]
+
+
+class NoteJson(TypedDict):
+    bpm: float
+    mustHitSection: bool
+    sectionNotes: list[tuple[Milliseconds, JsonLaneNum, Milliseconds]]
+    lengthInSteps: int
+
+
+class Flags:
+    NORMAL = "normal"
+# end of typing
 
 
 # I'm calling it ChartNote because I don't want to put display stuff in this.
@@ -6,153 +46,235 @@ from functools import total_ordering
 # I'll figure out display stuff later but God I keep mixing these two things
 # and it trips me up every time.
 
-class Flags:
-    normal = "normal"
-
-
-arrowmap = ["⬅", "⬇", "⬆", "➡"]
-
 
 @total_ordering
-class ChartNote:
-    def __init__(self, pos: float, lane: int, length: float):  # pos is in seconds
-        self.pos = pos                                         # float percision is fine
-        self.lane = lane                                       # don't worry about it
+class ChartEvent:
+    def __init__(self, pos: Seconds):
+        # pos is in seconds, float percision is fine, don't worry about it
+        self.pos = pos
+
+    def __lt__(self, other: Any) -> bool:
+        if not isinstance(other, ChartEvent):
+            return NotImplemented
+        return self.pos < other.pos
+
+    def __eq__(self, other: Any) -> bool:
+        return (
+            isinstance(other, ChartEvent)
+            and self.pos == self.pos
+        )
+
+
+class ChartNote(ChartEvent):
+    ARROWMAP = ["⬅", "⬇", "⬆", "➡"]
+
+    def __init__(self, pos: Seconds, lane: LaneNum, length: Seconds):
+        super().__init__(pos)
+        self.lane = lane
         self.length = length
-        self.flag = Flags.normal  # currently unused
+        self.flag = Flags.NORMAL  # currently unused
 
         self.hit = False
         self.missed = False
+        self.hit_time: Optional[float] = None
 
-    def hittable(self, current_time: float, window_ms: tuple[float, float]):
-        # window is passed in in ms because everyone thinks of windows in ms
-        window = window_ms[0] / 1000, window_ms[1] / 1000
-
+    def get_offset(self, current_time: Seconds) -> Seconds:
+        # Negative offset is early, positive is late
         offset = current_time - self.pos
+        return offset
 
-        # window is a tuple of the amount early you can be and the amount late you can be
-        window_front_end, window_back_end = window
-        window_front_end = -window_front_end
+    def hittable(self, current_time: Seconds, front_end: Seconds, back_end: Seconds) -> bool:
+        # the window is the amount early (front_end) and late (back_end) you can be
+        return (not self.hit) and (not self.missed) and (-front_end < self.get_offset(current_time) < back_end)
 
-        return (not self.hit) and (not self.missed) and (window_front_end < offset < window_back_end)
+    def expired(self, current_time: Seconds, back_end: Seconds) -> bool:
+        # the window is the amount early (front_end) and late (back_end) you can be
+        return (not self.hit) and (not self.missed) and (self.get_offset(current_time) < back_end)
 
     @property
-    def lane_name(self):
+    def lane_name(self) -> str:
         return ["left", "down", "up", "right"][self.lane]
 
-    def __lt__(self, other):
-        self.pos < other.pos
+    def __lt__(self, other: Any) -> bool:
+        # If the parent class determines they aren't equal, then return parent class's __lt__
+        if not super().__eq__(other):
+            return super().__lt__(other)
 
-    def __repr__(self):
+        # If the other is not a ChartNote, just group all the classes of the same name together
+        if not isinstance(other, ChartNote):
+            return self.__class__.__name__ < other.__class__.__name__
+
+        # They are both ChartNotes at the same position
+        return (self.lane, self.length, self.flag) < (other.lane, other.length, other.flag)
+
+    def __eq__(self, other: Any) -> bool:
+        return (
+            isinstance(other, ChartNote)
+            and super().__eq__(other)
+            and (self.lane, self.length, self.flag) == (other.lane, other.length, other.flag)
+        )
+
+    def __repr__(self) -> str:
         return f"<Note {self.pos}, {self.lane}, {self.length}, {self.flag}>"
 
-    def __str__(self):
+    def __str__(self) -> str:
         flag = "" if self.flag == "normal" else self.flag.title() + " "
-        arrow = arrowmap[self.lane]
-        pos = f" P {round(self.position, 4)}"
+        arrow = self.ARROWMAP[self.lane]
+        pos = f" P {round(self.pos, 4)}"
         length = "" if self.length == 0 else f" L {round(self.length, 4)}"
         hit = " HIT" if self.hit else ""
         missed = " MISSED" if self.missed else ""
         return f"<Note {flag}{arrow}{pos}{length}{hit}{missed}>"
 
 
-# This is for stuff in charts that's not notes
-# This probably is a bad idea but I don't want to think of every type of event rn
-@total_ordering
-class ChartEvent:
-    def __init__(self, pos: float, name: str, **data):  # The **data thing means I don't need to make like
-        self.pos = pos                                  # a hundred subclasses
-        self.name = name
-        self.data = data
+class ChangeBpmEvent(ChartEvent):
+    def __init__(self, pos: Seconds, bpm: float):
+        super().__init__(pos)
+        self.bpm = bpm
 
-    def __lt__(self, other):
-        self.pos < other.pos
+    def __lt__(self, other: Any) -> bool:
+        # If the parent class determines they aren't equal, then return parent class's __lt__
+        if not super().__eq__(other):
+            return super().__lt__(other)
+
+        # If the other is not a ChangeBpmEvent, just group all the classes of the same name together
+        if not isinstance(other, ChangeBpmEvent):
+            return self.__class__.__name__ < other.__class__.__name__
+
+        # They are both ChartNotes at the same position
+        return self.bpm < other.bpm
+
+    def __eq__(self, other: Any) -> bool:
+        return (
+            isinstance(other, ChangeBpmEvent)
+            and super().__eq__(other)
+            and self.bpm == other.bpm
+        )
+
+
+class CameraFocusEvent(ChartEvent):
+    def __init__(self, pos: Seconds, focused_player: PlayerNum):
+        super().__init__(pos)
+        self.focused_player = focused_player
+
+    def __lt__(self, other: Any) -> bool:
+        # If the parent class determines they aren't equal, then return parent class's __lt__
+        if not super().__eq__(other):
+            return super().__lt__(other)
+
+        # If the other is not a CameraFocusEvent, just group all the classes of the same name together
+        if not isinstance(other, CameraFocusEvent):
+            return self.__class__.__name__ < other.__class__.__name__
+
+        # They are both CameraFocusEvent at the same position
+        return self.focused_player < other.focused_player
+
+    def __eq__(self, other: Any) -> bool:
+        return (
+            isinstance(other, CameraFocusEvent)
+            and super().__eq__(other)
+            and self.focused_player == other.focused_player
+        )
 
 
 class Chart:
-    def __init__(self,  player: int, notespeed: float, notes: list[ChartNote], events: list[ChartEvent]):
+    def __init__(self,  player: PlayerNum, notespeed: float):
         self.player = player
         self.notespeed = notespeed
-        self.notes: list[ChartNote] = sorted(notes)
-        self.events: list[ChartEvent] = sorted(events)
+        self.notes: list[ChartNote] = []
+        self.active_notes: list[ChartNote] = []
+        self.events: list[ChartEvent] = []
+
+    def get_hittable_notes(self, current_time: Seconds, front_end: Seconds, back_end: Seconds) -> Iterable[ChartNote]:
+        n = 0
+        while n < len(self.active_notes):
+            note = self.active_notes[n]
+            if note.expired(current_time, back_end):
+                del self.active_notes[n]
+                n -= 1
+            elif not note.hittable(current_time, front_end, back_end):
+                break
+            else:
+                yield note
+            n += 1
 
 
 class Song:
-    def __init__(self, name: str, diff: int, bpm: float, charts: list[Chart], events: list[ChartEvent]):
+    def __init__(self, name: str, diff: Difficulty, bpm: float, charts: tuple[Chart, Chart], events: list[ChartEvent]):
         self.name = name
         self.diff = diff
         self.bpm = bpm
         self.charts = charts
         self.events = events
 
-    # Might be helpful?
-    @property
-    def notes_and_events(self):
-        return sorted(self.notes + self.events)     # sorted() is slow, calling it on a property is a bad idea
-
     @classmethod
-    def from_json(cls, j: dict):
+    def from_json(cls, j: SongFileJson) -> Song:
         song = j["song"]
         name = song["song"]
         bpm = song["bpm"]
         notespeed = song["speed"]
-        p1notes: list[ChartNote] = []
-        p2notes: list[ChartNote] = []
+        charts = Chart(1, notespeed), Chart(2, notespeed)
+        charts_by_playernum = {c.player: c for c in charts}
+
+        last_bpm = bpm
+        last_focus: Optional[PlayerNum] = None
+        section_start = 0.0
         songevents: list[ChartEvent] = []
-        p1events: list[ChartEvent] = []
-        p2events: list[ChartEvent] = []
-        sections: list[dict] = song["notes"]
-        lastBPM = bpm
-        lastMHS = None
-        timesofar: float = 0
+        sections = song["notes"]
         for section in sections:
             # There's a changeBPM event but like, it always has to be paired
             # with a bpm, so it's pointless anyway
-            newbpm = section.get("bpm", None)
-            if newbpm is not None and newbpm != lastBPM:
-                songevents.append(ChartEvent(timesofar, "change_bpm", bpm = newbpm))
+            if "bpm" in section:
+                new_bpm = section["bpm"]
+                if new_bpm != last_bpm:
+                    songevents.append(ChangeBpmEvent(section_start, new_bpm))
+                    last_bpm = new_bpm
 
             # Create a camera focus event like they should have in the first place
-            mustHitSection: bool = section["mustHitSection"]
-            if mustHitSection != lastMHS:
-                if mustHitSection is True:
-                    songevents.append(ChartEvent(timesofar, "camera_focus", focus = "player1"))
-                else:
-                    songevents.append(ChartEvent(timesofar, "camera_focus", focus = "player2"))
-                lastMHS = mustHitSection
+            if section["mustHitSection"]:
+                focused, unfocused = 1, 2
+            else:
+                focused, unfocused = 2, 1
+
+            if focused != last_focus:
+                songevents.append(CameraFocusEvent(section_start, focused))
+                last_focus = focused
 
             # Actually make two charts
-            sectionNotes: list = section["sectionNotes"]
-            if sectionNotes:
-                for note in sectionNotes:
-                    low = (0, 1, 2, 3)  # wow look at the hardcoding~!
-                    high = (4, 5, 6, 7)
-                    pos, lane, length = note  # hope this never breaks lol
-                    pos /= 1000
-                    if mustHitSection:
-                        if lane in low:
-                            p1notes.append(ChartNote(pos, lane, length))
-                        elif lane in high:
-                            p2notes.append(ChartNote(pos, lane - 4, length))
-                    else:
-                        if lane in high:
-                            p1notes.append(ChartNote(pos, lane - 4, length))
-                        elif lane in low:
-                            p2notes.append(ChartNote(pos, lane, length))
+            sectionNotes = section["sectionNotes"]
+            for note in sectionNotes:
+                posms, lane, lengthms = note  # hope this never breaks lol
+                pos = posms / 1000
+                length = lengthms / 1000
+
+                note_in_focused_lane = lane < 4
+                note_player = focused if note_in_focused_lane else unfocused
+                lanemap: list[LaneNum] = [0, 1, 2, 3, 0, 1, 2, 3]
+                chart_lane: Literal[0, 1, 2, 3] = lanemap[lane]
+
+                charts_by_playernum[note_player].notes.append(ChartNote(pos, chart_lane, length))
 
             # Since in theory you can have events in these sections
             # without there being notes there, I need to calculate where this
             # section occurs from scratch, and some engines have a startTime
             # thing here but I can't guarantee it so it's basically pointless
-            seconds_per_beat = 60 / lastBPM
+            seconds_per_beat = 60 / last_bpm
             seconds_per_measure = seconds_per_beat * 4
             seconds_per_sixteenth = seconds_per_measure / 16
-            time_this_section = section["lengthInSteps"] * seconds_per_sixteenth
-            timesofar += time_this_section
+            section_length = section["lengthInSteps"] * seconds_per_sixteenth
+            section_start += section_length
+
+        for c in charts:
+            c.events.sort()
+            c.notes.sort()
+            c.active_notes = c.notes.copy()
 
         # diff is hardcoded right now because I don't know how to extract it from
         # the chart. I think it's just based on the name.
-        return Song(name = name, diff = 2, bpm = bpm, charts = [
-            Chart(1, notespeed, p1notes, p1events),
-            Chart(2, notespeed, p2notes, p2events)
-        ], events = songevents)
+        return Song(
+            name,
+            Difficulties.NORMAL,
+            bpm,
+            charts,
+            songevents
+        )

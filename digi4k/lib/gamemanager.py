@@ -1,24 +1,21 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from importlib.resources import files
-
-from pygame.color import Color
-from pygame.constants import K_SPACE
-
-from digi4k.lib.objects.keybinder import KeyBinder
-from digi4k.lib.objects.songmanager import SongManager
-
 if TYPE_CHECKING:
     from digi4k.main import Game
 
 import json
+from importlib.resources import files
 
+from pygame.color import Color
+from pygame.constants import K_SPACE
 from nygame import music
 
+from digi4k.lib.objects.keybinder import KeyBinder
 import digi4k.data.charts.test
 from digi4k.lib.draw_objects import EventViewer, Highway
 from digi4k.lib.inputmanager import InputManager
+from digi4k.lib.songmanager import SongManager
 from digi4k.lib.objects.note import Song
 from digi4k.lib import ptext
 
@@ -26,7 +23,7 @@ from digi4k.lib import ptext
 class GameManager:
     def __init__(self, game: Game):
         self.game = game
-        self.song_file = j = json.loads(files(digi4k.data.charts.test).joinpath("test.json").read_text())
+        j = json.loads(files(digi4k.data.charts.test).joinpath("test.json").read_text())
         self.song = Song.from_json(j)
         self.highway_p1 = Highway(self.song.charts[0])
         self.highway_p2 = Highway(self.song.charts[1])

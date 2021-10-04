@@ -1,3 +1,4 @@
+from typing import Optional
 from digi4k.lib.inputmanager import InputManager
 from digi4k.lib.objects.keybinder import KeyBinder
 from digi4k.lib.objects.note import ChartNote, Song
@@ -9,11 +10,18 @@ from digi4k.lib.objects.note import ChartNote, Song
 
 
 class SongManager:
-    def __init__(self, song: Song, inputmanager: InputManager, keybinder: KeyBinder, hitwindow: tuple[float, float] = None):
+    def __init__(self, song: Song, inputmanager: InputManager, keybinder: KeyBinder, hitwindow: Optional[tuple[float, float]] = None):
         self.song = song
         self.input = inputmanager
         self.keybinder = keybinder
-        self.hitwindow = hitwindow if hitwindow is not None else (166 * (2 / 3), 166 * (1 / 3))
+
+        if hitwindow is None:
+            front_end = (166 * (2 / 3)) / 1000
+            back_end = (166 * (1 / 3)) / 1000
+        else:
+            front_end, back_end = hitwindow
+        self.front_end = front_end
+        self.back_end = back_end
 
         self.lanemap = {
             self.keybinder.left: 0,
@@ -25,25 +33,23 @@ class SongManager:
         self.hits = 0
         self.misses = 0
 
-    @property
-    def front_end(self):
-        return self.hitwindow[0]
-
-    @property
-    def back_end(self):
-        return self.hitwindow[1]
-
     def _try_hit_note(self, current_time: float, chart_idx: int = 0) -> int:
-        lanes = [self.lanemap[k] for k in self.input.justPressed if k in self.lanemap]
+        lanes_to_hit = {lane for key, lane in self.lanemap.items() if key in self.input.justPressed}
         chart = self.song.charts[chart_idx]
-        notes = chart.notes
-        hits = 0
-        for lane in lanes:
-            good_notes: list[ChartNote] = sorted([note for note in notes if note.lane == lane and note.hittable(current_time, (self.front_end, self.back_end))])
-            if good_notes:
-                good_notes[0].hit = True
-                good_notes[0].hit_time = current_time
-                hits += 1
+
+        notes_hit: list[ChartNote] = []
+        for note in chart.get_hittable_notes(current_time, self.front_end, self.back_end):
+            if not lanes_to_hit:
+                break
+            if note.lane in lanes_to_hit:
+                lanes_to_hit.remove(note.lane)
+                notes_hit.append(note)
+
+        for note in notes_hit:
+            note.hit = True
+            note.hit_time = current_time
+
+        hits = len(notes_hit)
         return hits
 
     def update(self, current_time: float):

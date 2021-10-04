@@ -1,14 +1,15 @@
 import pygame.key
 
+import pygame
 from pygame import KEYDOWN, KEYUP
 from pygame.event import Event
 
 
 class InputManager:
     def __init__(self):
-        self.pressed = set()
-        self.justPressed = set()
-        self.justReleased = set()
+        self.pressed: set[int] = set()
+        self.justPressed: set[int] = set()
+        self.justReleased: set[int] = set()
 
     def update(self, events: list[Event]):
         self.justPressed.clear()

@@ -8,7 +8,7 @@ class Game(nygame.Game):
         super().__init__(size=(1280, 720), bgcolor=0xAAAAAA, fps = 120, showfps = True)
         self.gm = GameManager(self)
 
-    def loop(self, events):
+    async def loop(self, events):
         self.gm.update(events)
 
 
