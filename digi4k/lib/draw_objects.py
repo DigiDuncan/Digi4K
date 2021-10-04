@@ -77,6 +77,10 @@ class DisplayNote:
     def missed(self):
         return self.note.missed
 
+    @property
+    def end(self):
+        return self.note.end
+
     # This will need to be adjusted later to account for, like, everything.
     @property
     def caching_key(self):
