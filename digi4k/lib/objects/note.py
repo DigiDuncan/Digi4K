@@ -52,6 +52,7 @@ class ChartEvent:
     def __init__(self, pos: Seconds):
         # pos is in seconds, float percision is fine, don't worry about it
         self.pos = pos
+        self.icon = "missing"
 
     def __lt__(self, other: Any) -> bool:
         if not isinstance(other, ChartEvent):
@@ -131,6 +132,7 @@ class ChangeBpmEvent(ChartEvent):
     def __init__(self, pos: Seconds, bpm: float):
         super().__init__(pos)
         self.bpm = bpm
+        self.icon = "bpm"
 
     def __lt__(self, other: Any) -> bool:
         # If the parent class determines they aren't equal, then return parent class's __lt__
@@ -156,6 +158,7 @@ class CameraFocusEvent(ChartEvent):
     def __init__(self, pos: Seconds, focused_player: PlayerNum):
         super().__init__(pos)
         self.focused_player = focused_player
+        self.icon = "cam"
 
     def __lt__(self, other: Any) -> bool:
         # If the parent class determines they aren't equal, then return parent class's __lt__

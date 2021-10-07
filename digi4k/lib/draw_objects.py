@@ -12,7 +12,7 @@ from pygame.surface import Surface
 import digi4k.data.fonts
 import digi4k.data.images.debug
 from digi4k.lib import ptext
-from digi4k.lib.objects.note import Chart, ChartEvent, ChartNote
+from digi4k.lib.objects.note import CameraFocusEvent, ChangeBpmEvent, Chart, ChartEvent, ChartNote
 
 MISSING_TEXTURE = Surface((120, 120))
 MISSING_TEXTURE.fill(0xFF00FF)
@@ -162,18 +162,17 @@ class Highway:
 
 class EventViewer:
     def __init__(self, events: list[ChartEvent]):
-        self.events: list[ChartEvent] = sorted(events)
+        self.events: list[ChartEvent] = events
         self._image = Surface((64, 64), flags = SRCALPHA)
         self.module = digi4k.data.images.debug
 
     def event_to_icon(self, event: ChartEvent) -> Surface:
-        if event.name == "camera_focus" and event.data == {"focus": "player1"}:
-            return "cam_p1"
-        elif event.name == "camera_focus" and event.data == {"focus": "player2"}:
-            return "cam_p2"
-        elif event.name == "change_bpm":
-            return "bpm"
-        return "missing"
+        icon = event.icon
+        if isinstance(event, CameraFocusEvent) and event.focused_player == 1:
+            icon += "_p1"
+        elif isinstance(event, CameraFocusEvent) and event.focused_player == 2:
+            icon += "_p2"
+        return icon
 
     def update(self, time: float):
         self._image.fill(CLEAR)
@@ -187,7 +186,9 @@ class EventViewer:
         fontpath = files(digi4k.data.fonts) / "debug.ttf"
 
         icon = pygame.image.load(iconpath)
-        if event.name == "change_bpm":
+
+        # BPM events are special, put BPM on icon
+        if isinstance(event, ChangeBpmEvent):
             ptext.draw(str(round(event.data["bpm"], 2)), fontsize = 12, fontname = fontpath, color = Color(0xAA00AA), topleft = (0, 16), surf = icon)
 
         self._image.blit(icon, (16, 0))
