@@ -1,0 +1,19 @@
+overrides are like injectors to a chart
+should probably support anything we allow in here in a chart
+but since I want to be able to just drop a good set of popular
+charts in, this deals with all their hardcoded stuff
+
+the format is:
+
+[{time: float, eventtype: str, attributes?: {attrname: any}}, ...]
+
+which would generate an object like:
+
+EventType(ChartEvent):
+    time: float = time
+    for k, v in attributes:
+        setattr(self, k, v)
+
+if eventtype is in a list of known events, it will make that event,
+if not just make a GenericChartEvent or something with the eventtype
+as an attribute
