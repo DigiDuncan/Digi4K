@@ -65,6 +65,9 @@ class ChartEvent:
             and self.pos == self.pos
         )
 
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} pos: {round(self.pos, 3)}>"
+
 
 class ChartNote(ChartEvent):
     ARROWMAP = ["⬅", "⬇", "⬆", "➡"]
