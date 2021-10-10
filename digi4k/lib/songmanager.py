@@ -11,10 +11,12 @@ from digi4k.lib.objects.note import ChartNote, Song
 
 class SongManager:
     def __init__(self, song: Song, inputmanager: InputManager, keybinder: KeyBinder, hitwindow: Optional[tuple[float, float]] = None):
+        # Input params
         self.song = song
         self.input = inputmanager
         self.keybinder = keybinder
 
+        # Hit window
         if hitwindow is None:
             front_end = (166 * (2 / 3)) / 1000
             back_end = (166 * (1 / 3)) / 1000
@@ -23,6 +25,7 @@ class SongManager:
         self.front_end = front_end
         self.back_end = back_end
 
+        # Lanemap
         self.lanemap = {
             self.keybinder.left: 0,
             self.keybinder.down: 1,
@@ -30,8 +33,15 @@ class SongManager:
             self.keybinder.right: 3
         }
 
+        # Hit / miss count
         self.hits = 0
         self.misses = 0
+
+        # Modchart stuff [unused currently, gotta calc these]
+        self.current_time = 0
+        self.current_step = 0
+        self.current_beat = 0
+        self.current_player = None
 
     def _try_hit_note(self, current_time: float, chart_idx: int = 0) -> int:
         lanes_to_hit = {lane for key, lane in self.lanemap.items() if key in self.input.justPressed}
