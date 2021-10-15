@@ -3,16 +3,17 @@ from __future__ import annotations
 from typing import Any, Iterable, Optional, TypedDict, Literal
 from functools import total_ordering
 
+from digi4k.lib.utils import EnumPlus
+
 # typing
 PlayerNum = Literal[1, 2]
 LaneNum = Literal[0, 1, 2, 3]
 JsonLaneNum = Literal[0, 1, 2, 3, 4, 5, 6, 7]
 Seconds = float
 Milliseconds = float
+
 Difficulty = Literal[1, 2, 3]
-
-
-class Difficulties:
+class Difficulties(metaclass=EnumPlus):     # noqa: E302
     EASY = 1
     NORMAL = 2
     HARD = 3
@@ -36,8 +37,13 @@ class NoteJson(TypedDict):
     lengthInSteps: int
 
 
-class Flags:
+Flag = Literal["normal", "bomb", "death", "gold"]
+class Flags(metaclass=EnumPlus):    # noqa: E302
     NORMAL = "normal"
+    BOMB = "bomb"
+    DEATH = "death"
+    GOLD = "gold"
+
 # end of typing
 
 
@@ -62,7 +68,7 @@ class ChartEvent:
     def __eq__(self, other: Any) -> bool:
         return (
             isinstance(other, ChartEvent)
-            and self.pos == self.pos
+            and self.pos == other.pos
         )
 
     def __repr__(self) -> str:
@@ -76,7 +82,7 @@ class ChartNote(ChartEvent):
         super().__init__(pos)
         self.lane = lane
         self.length = length
-        self.flag = Flags.NORMAL  # currently unused
+        self.flag: Flag = Flags.NORMAL  # currently unused
 
         self.hit = False
         self.missed = False
@@ -161,7 +167,7 @@ class CameraFocusEvent(ChartEvent):
     def __init__(self, pos: Seconds, focused_player: PlayerNum):
         super().__init__(pos)
         self.focused_player = focused_player
-        self.icon = "cam"
+        self.icon = f"cam_p{focused_player}"
 
     def __lt__(self, other: Any) -> bool:
         # If the parent class determines they aren't equal, then return parent class's __lt__
