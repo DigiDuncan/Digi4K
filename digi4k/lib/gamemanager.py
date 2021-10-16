@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import json
 from importlib.resources import files
+from pygame.rect import Rect
 
 from pygame.surface import Surface
-from pygame.color import Color
 from pygame.constants import K_SPACE
 from nygame import music
 
@@ -15,7 +15,6 @@ from digi4k.lib.draw_objects import EventViewer, Highway
 from digi4k.lib.inputmanager import InputManager
 from digi4k.lib.songmanager import SongManager
 from digi4k.lib.objects.note import Song
-from digi4k.lib import ptext
 
 
 class GameManager:
@@ -35,19 +34,26 @@ class GameManager:
         self.font = files(digi4k.data.fonts) / "debug.ttf"
 
     def update(self, events: list):
+        self.input.update(events)
+
         if K_SPACE in self.input.justPressed:
             music.playpause()
 
+        lanekeys = [
+            self.keybinder.left,
+            self.keybinder.down,
+            self.keybinder.up,
+            self.keybinder.right
+        ]
+        self.highway_p1.lanes_pressed = [k in self.input.pressed for k in lanekeys]
+
         now = music.elapsed
-        self.input.update(events)
         self.eventviewer.update(now)
         self.songmanager.update(now)
         self.highway_p1.update(now)
         self.highway_p2.update(now)
 
     def render_to(self, surf: Surface):
-        ptext.draw(str(self.songmanager.hits), midtop = surf.get_rect().midtop, fontname = self.font, fontsize = 100, color = Color(0x000000), surf = surf)
-
         surf_rect = surf.get_rect()
 
         highway_p1_rect = self.highway_p1.get_rect()
@@ -61,3 +67,7 @@ class GameManager:
         eventviewer_rect = self.eventviewer.get_rect()
         eventviewer_rect.center = surf_rect.center
         self.eventviewer.render_to(surf, eventviewer_rect)
+
+        songmanager_rect = Rect(0, 0, 0, 0)
+        songmanager_rect.midtop = surf_rect.midtop
+        self.songmanager.render_to(surf, songmanager_rect)

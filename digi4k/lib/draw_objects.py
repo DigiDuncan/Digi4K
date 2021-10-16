@@ -15,7 +15,7 @@ from pygame.surface import Surface
 import digi4k.data.fonts
 import digi4k.data.images.debug
 from digi4k.lib import ptext
-from digi4k.lib.objects.note import ChangeBpmEvent, Chart, ChartEvent, ChartNote, Flag, Flags
+from digi4k.lib.objects.note import LANES, ChangeBpmEvent, Chart, ChartEvent, ChartNote, Flag, Flags
 
 MISSING_TEXTURE = Surface((120, 120))
 MISSING_TEXTURE.fill(Color(0xFF00FF))
@@ -33,6 +33,8 @@ colormap = [
     Color(0xFF0000FF)
 ]
 anglemap = [90, 180, 0, -90]
+SPRITE_SIZE = 120, 120
+SPRITE_W, SPRITE_H = SPRITE_SIZE
 up_arrow_shape = [
     (60, 4),
     (4, 60),
@@ -44,12 +46,17 @@ up_arrow_shape = [
 ]
 
 
-def draw_sprite(lane: int, length: float, flag: Flag, hit: bool, missed: bool):
-    return draw_sprite_cached(lane, flag, hit)
+def draw_note(note: ChartNote, px_per_sec: float = None):
+    if px_per_sec is not None:
+        px_length = note.length * px_per_sec
+    else:
+        px_length = 0
+
+    return draw_note_cached(note.lane, px_length, note.flag)
 
 
 @cache
-def draw_sprite_cached(lane: int, flag: Flag, hit: bool):
+def draw_note_cached(lane: int, px_length: int, flag: Flag):
     if flag not in Flags:
         return MISSING_TEXTURE
 
@@ -65,35 +72,63 @@ def draw_sprite_cached(lane: int, flag: Flag, hit: bool):
     elif flag == Flags.GOLD:
         color = Color(0xAAAA00FF)
         outline = Color(0xAA6600FF)
+    elif flag == Flags.FAKE:
+        color = Color(0xCCCCCCFF)
+        outline = Color(0x333333FF)
+    elif flag == Flags.STRIKELINE:
+        color = Color(0xCCCCCCFF)
+        outline = Color(0x333333FF)
 
-    surf = Surface((120, 120), flags = SRCALPHA)
-    pygame.draw.polygon(surf, color, up_arrow_shape, 0)
-    pygame.draw.lines(surf, outline, True, up_arrow_shape, 6)
-    surf = pygame.transform.rotate(surf, anglemap[lane])
+    if px_length > SPRITE_H / 2:
+        w, h = SPRITE_W, SPRITE_H / 2 + px_length
+    else:
+        w, h = SPRITE_W, SPRITE_H
+    surf = Surface((w, h), flags = SRCALPHA)
 
-    if hit:
-        surf.set_alpha(100)
+    if flag == Flags.STRIKELINE:
+        surf.set_alpha(128)
+
+    if px_length > 0:
+        pygame.draw.line(
+            surf,
+            color,
+            (SPRITE_W / 2, SPRITE_H / 2),
+            (SPRITE_W / 2, SPRITE_H / 2 + px_length),
+            25
+        )
+    arrow_surf = Surface((SPRITE_W, SPRITE_H), flags = SRCALPHA)
+    pygame.draw.polygon(arrow_surf, color, up_arrow_shape, 0)
+    pygame.draw.lines(arrow_surf, outline, True, up_arrow_shape, 6)
+    arrow_surf = pygame.transform.rotate(arrow_surf, anglemap[lane])
+    surf.blit(arrow_surf, (0, 0))
 
     return surf
 
 
 class DisplayNote:
-    def __init__(self, note: ChartNote):
+    def __init__(self, note: ChartNote, px_per_sec: float = None):
         self.note = note
         self.pos = self.note.pos
         self.lane = self.note.lane
-        self.vanilla_sprite = draw_sprite(note.lane, note.length, note.flag, False, False)
-        self.hit_sprite = draw_sprite(note.lane, note.length, note.flag, True, False)
-        self.miss_sprite = draw_sprite(note.lane, note.length, note.flag, False, True)
+        self.length = self.note.length
+        self._sprite = draw_note(note, px_per_sec)
+
+    @property
+    def hit(self):
+        return self.note.hit
 
     @property
     def sprite(self):
+        # TODO: Add fading on miss
         if self.note.hit:
-            return self.hit_sprite
+            return self._sprite
         elif self.note.missed:
-            return self.miss_sprite
+            return self._sprite
         else:
-            return self.vanilla_sprite
+            return self._sprite
+
+    def get_rect(self) -> Rect:
+        return self._sprite.get_rect()
 
     def __repr__(self) -> str:
         return "<DisplayNote " + repr(self.note) + " >"
@@ -104,16 +139,22 @@ class DisplayNote:
 
 class Highway:
     def __init__(self, chart: Chart, size: tuple[int, int] = (480, 720)) -> None:
-        self.notes = [DisplayNote(note) for note in chart.notes]
+        self.viewport_size = 0.750  # 750ms
         self.size = size
-        self.sprite_size = (self.w // 4, self.w // 4)
-        self.rel_sprite_size = (self.sprite_size[0] / self.size[0], self.sprite_size[1] / self.size[1])
+        self.px_per_sec = self.h / self.viewport_size
+        self.notes = [DisplayNote(note, self.px_per_sec) for note in chart.notes]
 
+        self.show_zero = False
         self.rel_y_buffer: float = 100 / 720
-
         self.y_buffer: int = int(self.rel_y_buffer * self.h)
 
-        self.viewport_size = 0.75  # 750ms
+        self.strikeline_notes = [
+            (
+                DisplayNote(ChartNote(0, lane, 0, flag=Flags.NORMAL)),
+                DisplayNote(ChartNote(0, lane, 0, flag=Flags.STRIKELINE))
+            ) for lane in LANES
+        ]
+        self.lanes_pressed = [False, False, False, False]
 
         self.current_notes: list[DisplayNote] = []
         self._next_note: Optional[DisplayNote] = None
@@ -142,22 +183,17 @@ class Highway:
         while self.current_notes and self.get_note_rect(self.current_notes[0]).bottom < 0:
             self.current_notes.pop(0)
 
+        self.current_notes = [n for n in self.current_notes if not n.hit]
+
     def get_rect(self):
         return Rect(0, 0, self.w, self.h)
 
     def get_note_rect(self, note: DisplayNote) -> Rect:
-        w, h = self.sprite_size
-
-        x = note.lane * w
-
-        offset = note.pos - self.time   # negative past, positive future
-
-        rely = (offset) / self.viewport_size
-        y = rely * self.h
-        y -= h / 2
-        y += self.y_buffer
-
-        return Rect(x, int(y), w, h)
+        rect = note.get_rect()
+        rect.x = note.lane * SPRITE_W
+        seconds_until = note.pos - self.time   # negative past, positive future
+        rect.y = int(self.y_buffer + (seconds_until * self.px_per_sec) - SPRITE_H / 2)
+        return rect
 
     def update(self, time: float):
         self.time = time
@@ -165,12 +201,20 @@ class Highway:
 
     def render_to(self, surf: Surface, dest: Rect):
         surf.fill(BLACK, dest)
-        linerect = Rect(0, self.y_buffer, self.w, 0)
-        linerect.move_ip(dest.x, dest.y)
-        pygame.draw.line(surf, Color(0xFF0000FF), linerect.topleft, linerect.topright, 3)
+
+        if self.show_zero:
+            linerect = Rect(0, self.y_buffer, self.w, 0)
+            linerect.move_ip(dest.x, dest.y)
+            pygame.draw.line(surf, Color(0xFF0000FF), linerect.topleft, linerect.topright, 3)
+
+        for (pressed_note, released_note), is_pressed in zip(self.strikeline_notes, self.lanes_pressed):
+            note = pressed_note if is_pressed else released_note
+            rect = self.get_note_rect(note)
+            rect.y = int(self.y_buffer - rect.h / 2)
+            surf.blit(note.sprite, rect.move(dest.topleft))
+
         for note in self.current_notes:
-            note_rect = self.get_note_rect(note)
-            surf.blit(note.sprite, note_rect.move(dest.topleft))
+            surf.blit(note.sprite, self.get_note_rect(note).move(dest.topleft))
 
 
 class EventViewer:
@@ -178,7 +222,7 @@ class EventViewer:
         self.events: list[ChartEvent] = events.copy()
         self._buff = Surface((64, 64), flags = SRCALPHA)
         self._buff2 = Surface((128, 128), flags = SRCALPHA)
-        self.icon_images = {name: pygame.image.load(files(digi4k.data.images.debug) / f"{name}.png").convert_alpha() for name in ["missing", "bpm", "cam_p1", "cam_p2"]}
+        self.icon_images = {name: pygame.image.load(files(digi4k.data.images.debug) / f"{name}.png").convert_alpha() for name in ["missing", "bpm", "cam_p1", "cam_p2", "announcer_1", "announcer_2", "announcer_3", "announcer_go"]}
         self._font = files(digi4k.data.fonts) / "debug.ttf"
         self.current_offset = None
         self._next_event: Union[ChartEvent, None] = None
